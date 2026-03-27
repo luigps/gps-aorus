@@ -1,0 +1,75 @@
+gps_aorus.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPS AORUS - ANDROID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        body { margin: 0; background: black; color: red; font-family: Arial; overflow: hidden; }
+        #mapa { width: 100vw; height: 100vh; background-image: url('CartaLagos.png'); background-size: contain; background-repeat: no-repeat; position: relative; }
+        #painel { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid red; z-index: 10; }
+        #bussola { position: absolute; top: 10px; right: 10px; width: 80px; height: 80px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.5); }
+        #agulha { position: absolute; top: 5px; left: 38px; width: 4px; height: 35px; background: red; transform-origin: bottom; }
+        .botao { width: 60px; height: 60px; background: #333; border: 2px solid #555; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 25px; color: white; border-radius: 8px; }
+        /* Botão para o Android não bloquear */
+        #btnLigar { background: green; color: white; border: none; padding: 10px; width: 100%; font-weight: bold; margin-bottom: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="painel">
+        <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS</button>
+        <div id="dados">LAT: --.----<br>LON: --.----</div>
+        <hr>
+        <div id="botoes">
+            <div class="botao" onclick="mudarSel(3)">⚓</div>
+            <div class="botao" onclick="mudarSel(10)">🐟</div>
+        </div>
+    </div>
+
+    <div id="bussola">
+        <div id="agulha"></div>
+        <div id="graus" style="position:absolute; bottom:-25px; width:100%; text-align:center;">0°</div>
+    </div>
+
+    <div id="mapa" onclick="marcarPonto(event)">
+        <div id="barco" style="position:absolute; width:15px; height:15px; background:white; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display:none;"></div>
+    </div>
+
+    <script>
+        let selecao = 3; 
+        function mudarSel(id) { selecao = id; }
+
+        function iniciarGPS() {
+            if (navigator.geolocation) {
+                document.getElementById('dados').innerHTML = "A PROCURAR...";
+                navigator.geolocation.watchPosition(pos => {
+                    // Quando apanha sinal, esconde o botão verde e mostra os números
+                    document.getElementById('btnLigar').style.display = 'none';
+                    let lat = pos.coords.latitude.toFixed(4);
+                    let lon = pos.coords.longitude.toFixed(4);
+                    let rumo = pos.coords.heading || 0;
+                    document.getElementById('dados').innerHTML = "LAT: " + lat + "<br>LON: " + lon;
+                    document.getElementById('agulha').style.transform = "rotate(" + rumo + "deg)";
+                    document.getElementById('graus').innerText = Math.round(rumo) + "°";
+                    document.getElementById('barco').style.display = 'block';
+                }, err => {
+                    alert("ERRO NO GPS: Verifique se o Chrome tem autorização.");
+                }, { enableHighAccuracy: true });
+            }
+            // Manter ecrã aceso
+            if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').catch(e=>{}); }
+        }
+
+        function marcarPonto(e) {
+            let p = document.createElement('div');
+            p.style.position = "absolute";
+            p.style.left = e.clientX + "px";
+            p.style.top = e.clientY + "px";
+            p.style.fontSize = "24px";
+            p.innerText = (selecao == 3) ? "⚓" : "🐟";
+            document.getElementById('mapa').appendChild(p);
+        }
+    </script>
+</body>
+</html>
