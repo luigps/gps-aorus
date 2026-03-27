@@ -2,37 +2,41 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - COMANDO LAGOS</title>
+    <title>GPS AORUS - RIGOR DE LAGOS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: black; color: white; font-family: Arial; overflow: hidden; }
         #mapa { width: 100vw; height: 100vh; background-image: url('CartaLagos.png'); background-size: cover; background-position: center; position: absolute; z-index: 1; }
         
-        /* A CAIXA ORIGINAL NO CANTO INFERIOR ESQUERDO */
+        /* CAIXA NO CANTO INFERIOR ESQUERDO */
         #painel { 
             position: absolute; bottom: 10px; left: 10px; 
             background: rgba(0,0,0,0.9); padding: 12px; 
             border: 2px solid red; z-index: 100; 
-            width: 180px; border-radius: 10px; 
+            width: 190px; border-radius: 10px; 
         }
         
-        #dados { color: #00FF00; font-family: monospace; font-size: 16px; margin-bottom: 10px; }
+        /* COORDENADAS E VELOCIDADE EM VERDE */
+        #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 10px; line-height: 1.4; }
+        .destaque { color: yellow; font-size: 18px; font-weight: bold; }
+
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
-        /* BOTÕES ORIGINAIS */
         button { padding: 12px; font-weight: bold; border-radius: 8px; border: 1px solid white; font-size: 14px; }
-        .btn-principal { background: red; color: white; grid-column: span 2; font-size: 16px; }
+        
+        /* BOTÃO DA MARCA PRINCIPAL (VERMELHO) */
+        .btn-principal { background: #ff0000; color: white; grid-column: span 2; font-size: 16px; }
         .btn-pt { background: #333; color: white; }
         #btnLigar { background: green; width: 100%; font-size: 18px; margin-bottom: 10px; }
         #btnLimpar { background: #111; color: #555; width: 100%; margin-top: 10px; border: none; font-size: 9px; }
 
-        /* BÚSSOLA NO CANTO INFERIOR DIREITO */
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; }
         #agulha { position: absolute; top: 10px; left: 38px; width: 4px; height: 30px; background: red; transform-origin: bottom; }
         
-        /* O BARCO QUE SE MOVE COM O GPS */
         #barco { position: absolute; width: 20px; height: 20px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 50; display: none; transform: translate(-50%, -50%); border: 1px solid black; }
-        .ponto-marcado { position: absolute; font-size: 28px; z-index: 40; transform: translate(-50%, -50%); pointer-events: none; }
+        
+        /* A MARCA AGORA É UM PONTO VERMELHO */
+        .ponto-marcado { position: absolute; width: 15px; height: 15px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); pointer-events: none; }
+        .ponto-gps { position: absolute; font-size: 24px; z-index: 40; transform: translate(-50%, -50%); pointer-events: none; }
     </style>
 </head>
 <body>
@@ -42,11 +46,13 @@ gps_aorus.html
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS</button>
     <div id="dados">
-        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn<br>
+        LAT: <span id="lat">00.00000</span><br>
+        LON: <span id="lon">00.00000</span><br>
+        VEL: <span id="vel" class="destaque">0.0</span> kn<br>
         DIST: <span id="dist" style="color:cyan">---</span> m
     </div>
     <div class="grid-botoes">
-        <button class="btn-principal" onclick="marcar(0)">MARCA FIXA ⚓</button>
+        <button class="btn-principal" onclick="marcar(0)">MARCA PRINCIPAL 🔴</button>
         <button class="btn-pt" onclick="marcar(1)">P1</button>
         <button class="btn-pt" onclick="marcar(2)">P2</button>
         <button class="btn-pt" onclick="marcar(3)">P3</button>
@@ -61,7 +67,6 @@ gps_aorus.html
     let pontosSalvos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
     let posAtual = { x: 0, y: 0 };
 
-    // Limites de Lagos (para o barco se mexer na carta)
     const latN = 37.12; const latS = 37.08; const lonO = -8.69; const lonE = -8.65;
 
     function iniciarGPS() {
@@ -70,9 +75,11 @@ gps_aorus.html
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             const speed = pos.coords.speed ? (pos.coords.speed * 1.94384).toFixed(1) : "0.0";
+            
+            document.getElementById('lat').innerText = lat.toFixed(5);
+            document.getElementById('lon').innerText = lon.toFixed(5);
             document.getElementById('vel').innerText = speed;
 
-            // MOVE O BARCO NO ECRÃ
             posAtual.x = ((lon - lonO) / (lonE - lonO)) * window.innerWidth;
             posAtual.y = ((latN - lat) / (latN - latS)) * window.innerHeight;
 
@@ -90,18 +97,24 @@ gps_aorus.html
     function marcar(id) {
         const b = document.getElementById('barco');
         if (b.style.display === 'none') return;
-        pontosSalvos[id] = { x: b.style.left, y: b.style.top, t: id === 0 ? "⚓" : "📍" };
+        // Salva se é a Marca Principal (0) ou os outros (P1, P2...)
+        pontosSalvos[id] = { x: b.style.left, y: b.style.top, tipo: id === 0 ? "principal" : "comum" };
         localStorage.setItem('pontosAorus', JSON.stringify(pontosSalvos));
         desenharPontos();
     }
 
     function desenharPontos() {
-        document.querySelectorAll('.ponto-marcado').forEach(p => p.remove());
-        Object.values(pontosSalvos).forEach(p => {
+        document.querySelectorAll('.ponto-marcado, .ponto-gps').forEach(p => p.remove());
+        Object.keys(pontosSalvos).forEach(id => {
+            const p = pontosSalvos[id];
             let div = document.createElement('div');
-            div.className = 'ponto-marcado';
+            if (p.tipo === "principal") {
+                div.className = 'ponto-marcado'; // Círculo Vermelho
+            } else {
+                div.className = 'ponto-gps';
+                div.innerText = "📍";
+            }
             div.style.left = p.x; div.style.top = p.y;
-            div.innerText = p.t;
             document.getElementById('mapa').appendChild(div);
         });
     }
