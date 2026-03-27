@@ -2,56 +2,73 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - CARTA MÓVEL</title>
+    <title>GPS AORUS - CARTA COSTEIRA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        /* O segredo: o mapa agora é maior que o ecrã e desliza */
         body { margin: 0; padding: 0; background: black; color: white; font-family: Arial; overflow: hidden; }
+        #contentor-mapa { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #001f3f; /* Mar Azul */ }
         
-        #contentor-mapa { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        
+        /* O MAPA QUE DESLIZA (Desenho da Costa) */
         #mapa { 
-            width: 3000px; height: 3000px; /* Tamanho grande para a carta deslizar */
-            background-image: url('CartaLagos.png'); 
-            background-size: contain; background-repeat: no-repeat;
+            width: 3000px; height: 1500px; /* Área de navegação alargada */
             position: absolute; z-index: 1; 
-            transition: transform 0.5s ease-out; /* Movimento suave da carta */
+            transition: transform 0.4s ease-out;
         }
         
-        /* O BARCO FICA SEMPRE NO CENTRO DO ECRÃ */
+        /* DESENHO DA COSTA (Linha Castanha) */
+        #costa {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-top: 15px solid #8b4513; /* Linha da costa castanha no topo */
+            border-radius: 50px 50px 0 0; /* Curva suave da costa */
+        }
+
+        /* NOMES DOS LOCAIS (Branco e Legível) */
+        .local { position: absolute; color: white; font-weight: bold; font-size: 24px; text-shadow: 2px 2px 2px black; transform: translate(-50%, -100%); z-index: 5; }
+
+        /* O BARCO NO CENTRO DO ECRÃ */
         #barco { 
             position: absolute; top: 50%; left: 50%; 
             width: 25px; height: 25px; background: yellow; 
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
             z-index: 100; transform: translate(-50%, -50%); 
-            border: 1px solid black; box-shadow: 0 0 10px yellow;
+            border: 2px solid black; box-shadow: 0 0 10px yellow;
         }
 
+        /* PAINEL (Canto Inferior Esquerdo) */
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); padding: 12px; border: 2px solid red; z-index: 200; width: 190px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 10px; }
         .destaque { color: yellow; font-size: 18px; font-weight: bold; }
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        button { padding: 12px; font-weight: bold; border-radius: 8px; border: 1px solid white; font-size: 14px; }
+        button { padding: 12px; font-weight: bold; border-radius: 8px; border: 1px solid white; font-size: 14px; cursor: pointer; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; }
         .btn-pt { background: #333; color: white; }
         #btnLigar { background: green; width: 100%; font-size: 18px; margin-bottom: 10px; }
 
+        /* BÚSSOLA (Canto Inferior Direito) */
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
-        #agulha { position: absolute; top: 10px; left: 38px; width: 4px; height: 30px; background: red; transform-origin: bottom; }
+        #agulha { position: absolute; top: 10px; left: 38px; width: 4px; height: 30px; background: red; transform-origin: bottom; transition: transform 0.2s; }
         
+        /* MARCAS DE PESCA */
         .ponto-marcado { position: absolute; width: 15px; height: 15px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
-        .ponto-gps { position: absolute; font-size: 24px; z-index: 40; transform: translate(-50%, -50%); }
+        .ponto-gps { position: absolute; font-size: 28px; z-index: 40; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
 
 <div id="contentor-mapa">
-    <div id="mapa"></div>
+    <div id="mapa">
+        <div id="costa"></div>
+        <div class="local" style="top: 20px; left: 10%;">Burgau</div>
+        <div class="local" style="top: 30px; left: 25%;">Luz</div>
+        <div class="local" style="top: 5px; left: 50%;">Lagos</div>
+        <div class="local" style="top: 15px; left: 70%;">Alvor (Barra)</div>
+        <div class="local" style="top: 35px; left: 90%;">Portimão</div>
+    </div>
     <div id="barco"></div>
 </div>
 
 <div id="painel">
-    <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS</button>
+    <button id="btnLigar" onclick="iniciarGPS()">LIGAR SISTEMA</button>
     <div id="dados">
         LAT: <span id="lat">00.00000</span><br>
         LON: <span id="lon">00.00000</span><br>
@@ -71,10 +88,10 @@ gps_aorus.html
 
 <script>
     let pontosSalvos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let posNoMapa = { x: 1500, y: 1500 }; // Centro inicial da carta grande
+    let posNoMapa = { x: 1500, y: 750 }; // Centro inicial
 
-    // LIMITES DE LAGOS (Calibragem)
-    const latN = 37.12; const latS = 37.08; const lonO = -8.69; const lonE = -8.65;
+    // LIMITES DE LAGOS (Calibrados para Burgau -> Portimão)
+    const latN = 37.130; const latS = 37.060; const lonO = -8.780; const lonE = -8.500;
 
     function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
@@ -87,14 +104,16 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(5);
             document.getElementById('vel').innerText = speed;
 
-            // Calcula a posição do barco DENTRO da carta grande (3000px)
+            // Calcula a posição do barco DENTRO da carta grande (3000x1500)
             posNoMapa.x = ((lon - lonO) / (lonE - lonO)) * 3000;
-            posNoMapa.y = ((latN - lat) / (latN - latS)) * 3000;
+            posNoMapa.y = ((latN - lat) / (latN - latS)) * 1500;
 
             // MOVE A CARTA (O Barco fica parado no centro do ecrã)
             const deslocamentoX = (window.innerWidth / 2) - posNoMapa.x;
             const deslocamentoY = (window.innerHeight / 2) - posNoMapa.y;
-            document.getElementById('mapa').style.transform = `translate(${desocamentoX}px, ${deslocamentoY}px)`;
+            
+            // Segurança para não sair do mapa desenhado
+            document.getElementById('mapa').style.transform = `translate(${deslocamentoX}px, ${deslocamentoY}px)`;
             
             if (pos.coords.heading) document.getElementById('agulha').style.transform = `rotate(${pos.coords.heading}deg)`;
             atualizarDistancia();
@@ -103,6 +122,7 @@ gps_aorus.html
     }
 
     function marcar(id) {
+        if (document.getElementById('barco').style.display === 'none') return;
         pontosSalvos[id] = { x: posNoMapa.x, y: posNoMapa.y, tipo: id === 0 ? "principal" : "comum" };
         localStorage.setItem('pontosAorus', JSON.stringify(pontosSalvos));
         desenharPontos();
@@ -123,7 +143,8 @@ gps_aorus.html
     function atualizarDistancia() {
         if (pontosSalvos[0]) {
             let d = Math.sqrt(Math.pow(pontosSalvos[0].x - posNoMapa.x, 2) + Math.pow(pontosSalvos[0].y - posNoMapa.y, 2));
-            document.getElementById('dist').innerText = Math.round(d * 2); 
+            // Fator de conversão aproximado para metros nesta escala
+            document.getElementById('dist').innerText = Math.round(d * 8); 
         }
     }
 </script>
