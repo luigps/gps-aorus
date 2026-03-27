@@ -2,83 +2,92 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - LAGOS V2</title>
+    <title>GPS AORUS - MEMÓRIA E DISTÂNCIA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: black; color: red; font-family: Arial; overflow: hidden; }
         #mapa { width: 100vw; height: 100vh; background-image: url('CartaLagos.png'); background-size: cover; background-position: center; position: absolute; z-index: 1; }
-        #painel { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid red; z-index: 100; }
-        
-        /* BÚSSOLA MAIOR E MAIS VISÍVEL */
-        #bussola { position: absolute; bottom: 30px; right: 20px; width: 90px; height: 90px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; box-shadow: 0 0 10px red; }
-        #agulha { position: absolute; top: 10px; left: 43px; width: 4px; height: 35px; background: red; transform-origin: bottom; transition: transform 0.3s ease-out; }
-        #graus { position:absolute; bottom:-25px; width:100%; text-align:center; color: yellow; font-weight:bold; font-size: 18px; }
-        
-        #btnLigar { background: green; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        #painel { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid red; z-index: 100; min-width: 150px; }
+        #bussola { position: absolute; bottom: 30px; right: 20px; width: 80px; height: 80px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; }
+        #agulha { position: absolute; top: 10px; left: 38px; width: 4px; height: 30px; background: red; transform-origin: bottom; }
+        .ponto { position: absolute; font-size: 24px; z-index: 40; cursor: pointer; transform: translate(-50%, -50%); }
+        #distancia { color: yellow; font-weight: bold; margin-top: 5px; font-size: 16px; }
+        button { background: #444; color: white; border: 1px solid white; padding: 8px; margin: 2px; border-radius: 4px; font-weight: bold; }
+        #btnLigar { background: green; width: 100%; margin-bottom: 10px; }
+        #btnLimpar { background: darkred; font-size: 10px; }
     </style>
 </head>
 <body>
 
     <div id="mapa" onclick="marcarPonto(event)">
-        <div id="barco" style="position:absolute; width:18px; height:18px; background:yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display:none; z-index: 50; border: 1px solid black;"></div>
+        <div id="barco" style="position:absolute; width:18px; height:18px; background:yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display:none; z-index: 50; transform: translate(-50%, -50%);"></div>
     </div>
 
     <div id="painel">
-        <button id="btnLigar" onclick="iniciarTudo()">LIGAR GPS E BÚSSOLA</button>
-        <div id="dados" style="font-size: 14px; margin-top:5px;">LAT: --.----<br>LON: --.----</div>
+        <button id="btnLigar" onclick="iniciarTudo()">LIGAR GPS</button>
+        <div id="dados">LAT: --.----<br>LON: --.----</div>
+        <div id="distancia">DIST: --- m</div>
+        <button id="btnLimpar" onclick="limparPontos()">APAGAR TODOS OS PONTOS</button>
     </div>
 
-    <div id="bussola">
-        <div id="agulha"></div>
-        <div id="graus">0°</div>
-    </div>
+    <div id="bussola"><div id="agulha"></div></div>
 
     <script>
+        let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || [];
+        let posBarco = { x: 0, y: 0 };
+
+        window.onload = () => { pontos.forEach(p => desenharPonto(p.x, p.y)); };
+
         function iniciarTudo() {
-            // 1. ATIVAR GPS (PARA POSIÇÃO)
             if (navigator.geolocation) {
                 document.getElementById('btnLigar').style.display = 'none';
                 navigator.geolocation.watchPosition(pos => {
                     let lat = pos.coords.latitude.toFixed(5);
                     let lon = pos.coords.longitude.toFixed(5);
-                    let rumoGPS = pos.coords.heading;
-                    
                     document.getElementById('dados').innerHTML = "LAT: " + lat + "<br>LON: " + lon;
+                    
+                    // Simulação do barco no centro para teste visual
                     document.getElementById('barco').style.display = 'block';
-
-                    // Se o barco se mexer, a agulha segue o GPS
-                    if (rumoGPS !== null) {
-                        atualizarAgulha(rumoGPS);
-                    }
+                    document.getElementById('barco').style.left = "50%";
+                    document.getElementById('barco').style.top = "50%";
+                    posBarco = { x: window.innerWidth/2, y: window.innerHeight/2 };
+                    
+                    if (pos.coords.heading) document.getElementById('agulha').style.transform = `rotate(${pos.coords.heading}deg)`;
+                    calcularDistancia();
                 }, null, { enableHighAccuracy: true });
             }
-
-            // 2. ATIVAR BÚSSOLA MAGNÉTICA (PARA QUANDO ESTÁ PARADO)
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientationabsolute', function(e) {
-                    let bussola = e.alpha || e.webkitCompassHeading;
-                    if (bussola) {
-                        // Se o telemóvel rodar na mão, a agulha mexe logo!
-                        atualizarAgulha(360 - bussola);
-                    }
-                }, true);
-            }
-        }
-
-        function atualizarAgulha(valor) {
-            document.getElementById('agulha').style.transform = "rotate(" + valor + "deg)";
-            document.getElementById('graus').innerText = Math.round(valor) + "°";
         }
 
         function marcarPonto(e) {
+            if (e.target.id !== "mapa") return;
+            let novoPonto = { x: e.clientX, y: e.clientY };
+            pontos.push(novoPonto);
+            localStorage.setItem('pontosAorus', JSON.stringify(pontos));
+            desenharPonto(novoPonto.x, novoPonto.y);
+            calcularDistancia();
+        }
+
+        function desenharPonto(x, y) {
             let p = document.createElement('div');
-            p.style.position = "absolute";
-            p.style.left = (e.clientX - 10) + "px";
-            p.style.top = (e.clientY - 10) + "px";
-            p.style.fontSize = "24px";
-            p.style.zIndex = "40";
+            p.className = 'ponto';
+            p.style.left = x + "px";
+            p.style.top = y + "px";
             p.innerText = "⚓";
             document.getElementById('mapa').appendChild(p);
+        }
+
+        function calcularDistancia() {
+            if (pontos.length === 0) return;
+            let p = pontos[pontos.length - 1]; // Distância para a última ⚓
+            let d = Math.sqrt(Math.pow(p.x - posBarco.x, 2) + Math.pow(p.y - posBarco.y, 2));
+            document.getElementById('distancia').innerText = "DIST: " + Math.round(d) + " m";
+        }
+
+        function limparPontos() {
+            if (confirm("Comandante, quer apagar todos os pontos?")) {
+                localStorage.removeItem('pontosAorus');
+                location.reload();
+            }
         }
     </script>
 </body>
