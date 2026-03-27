@@ -2,82 +2,83 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - LAGOS</title>
+    <title>GPS AORUS - LAGOS V2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: black; color: red; font-family: Arial; overflow: hidden; }
+        #mapa { width: 100vw; height: 100vh; background-image: url('CartaLagos.png'); background-size: cover; background-position: center; position: absolute; z-index: 1; }
+        #painel { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px; border: 1px solid red; z-index: 100; }
         
-        /* AJUSTE 1: A CARTA AGORA ENCHE TODO O ECRÃ */
-        #mapa { 
-            width: 100vw; 
-            height: 100vh; 
-            background-image: url('CartaLagos.png'); 
-            background-size: cover; /* Faz a carta esticar para tapar o preto */
-            background-position: center;
-            position: absolute; 
-            top: 0; left: 0;
-            z-index: 1; /* Fica no fundo */
-        }
-
-        #painel { 
-            position: absolute; top: 10px; left: 10px; 
-            background: rgba(0,0,0,0.8); padding: 8px; 
-            border: 1px solid red; z-index: 100; /* Salta para a frente */
-        }
-
-        /* AJUSTE 2: A BÚSSOLA SALTA PARA A FRENTE DA CARTA */
-        #bussola { 
-            position: absolute; bottom: 20px; right: 20px; 
-            width: 70px; height: 70px; 
-            border: 2px solid white; border-radius: 50%; 
-            background: rgba(0,0,0,0.6); 
-            z-index: 100; /* Agora fica por cima de tudo */
-        }
-
-        #agulha { 
-            position: absolute; top: 5px; left: 33px; 
-            width: 4px; height: 30px; 
-            background: red; transform-origin: bottom; 
-        }
-
-        #btnLigar { 
-            background: green; color: white; border: none; 
-            padding: 10px; width: 100%; font-weight: bold; 
-            margin-bottom: 5px; border-radius: 5px; 
-        }
+        /* BÚSSOLA MAIOR E MAIS VISÍVEL */
+        #bussola { position: absolute; bottom: 30px; right: 20px; width: 90px; height: 90px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; box-shadow: 0 0 10px red; }
+        #agulha { position: absolute; top: 10px; left: 43px; width: 4px; height: 35px; background: red; transform-origin: bottom; transition: transform 0.3s ease-out; }
+        #graus { position:absolute; bottom:-25px; width:100%; text-align:center; color: yellow; font-weight:bold; font-size: 18px; }
+        
+        #btnLigar { background: green; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="mapa" onclick="marcarPonto(event)">
-        <div id="barco" style="position:absolute; width:15px; height:15px; background:yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display:none; z-index: 50;"></div>
+        <div id="barco" style="position:absolute; width:18px; height:18px; background:yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); display:none; z-index: 50; border: 1px solid black;"></div>
     </div>
 
     <div id="painel">
-        <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS</button>
-        <div id="dados" style="font-size: 14px;">LAT: --.----<br>LON: --.----</div>
+        <button id="btnLigar" onclick="iniciarTudo()">LIGAR GPS E BÚSSOLA</button>
+        <div id="dados" style="font-size: 14px; margin-top:5px;">LAT: --.----<br>LON: --.----</div>
     </div>
 
     <div id="bussola">
         <div id="agulha"></div>
-        <div id="graus" style="position:absolute; bottom:-25px; width:100%; text-align:center; color: white; font-weight:bold;">0°</div>
+        <div id="graus">0°</div>
     </div>
 
     <script>
-        function iniciarGPS() {
+        function iniciarTudo() {
+            // 1. ATIVAR GPS (PARA POSIÇÃO)
             if (navigator.geolocation) {
-                document.getElementById('dados').innerHTML = "A PROCURAR...";
+                document.getElementById('btnLigar').style.display = 'none';
                 navigator.geolocation.watchPosition(pos => {
-                    document.getElementById('btnLigar').style.display = 'none';
                     let lat = pos.coords.latitude.toFixed(5);
                     let lon = pos.coords.longitude.toFixed(5);
-                    let rumo = pos.coords.heading || 0;
+                    let rumoGPS = pos.coords.heading;
+                    
                     document.getElementById('dados').innerHTML = "LAT: " + lat + "<br>LON: " + lon;
-                    document.getElementById('agulha').style.transform = "rotate(" + rumo + "deg)";
-                    document.getElementById('graus').innerText = Math.round(rumo) + "°";
                     document.getElementById('barco').style.display = 'block';
+
+                    // Se o barco se mexer, a agulha segue o GPS
+                    if (rumoGPS !== null) {
+                        atualizarAgulha(rumoGPS);
+                    }
                 }, null, { enableHighAccuracy: true });
             }
+
+            // 2. ATIVAR BÚSSOLA MAGNÉTICA (PARA QUANDO ESTÁ PARADO)
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientationabsolute', function(e) {
+                    let bussola = e.alpha || e.webkitCompassHeading;
+                    if (bussola) {
+                        // Se o telemóvel rodar na mão, a agulha mexe logo!
+                        atualizarAgulha(360 - bussola);
+                    }
+                }, true);
+            }
+        }
+
+        function atualizarAgulha(valor) {
+            document.getElementById('agulha').style.transform = "rotate(" + valor + "deg)";
+            document.getElementById('graus').innerText = Math.round(valor) + "°";
+        }
+
+        function marcarPonto(e) {
+            let p = document.createElement('div');
+            p.style.position = "absolute";
+            p.style.left = (e.clientX - 10) + "px";
+            p.style.top = (e.clientY - 10) + "px";
+            p.style.fontSize = "24px";
+            p.style.zIndex = "40";
+            p.innerText = "⚓";
+            document.getElementById('mapa').appendChild(p);
         }
     </script>
 </body>
