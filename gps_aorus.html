@@ -2,74 +2,79 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - ZOOM E RIGOR</title>
+    <title>GPS AORUS - CARTA CARTOGRÁFICA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        body { margin: 0; padding: 0; background: #001f3f; color: white; font-family: Arial; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #001f3f; color: white; font-family: Arial, sans-serif; overflow: hidden; }
+        
+        /* O CONTENTOR DA CARTA (OCUPA TUDO) */
         #contentor-mapa { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
-        /* O MAPA QUE MUDA DE TAMANHO (ZOOM) */
-        #mapa { 
-            width: 3000px; height: 1500px; position: absolute; z-index: 1; 
-            transition: transform 0.3s ease-out; transform-origin: center;
+        /* O DESENHO VETORIAL DA COSTA (SVG) */
+        #svg-mapa {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
         }
-        
-        #costa { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-top: 15px solid #8b4513; border-radius: 50px 50px 0 0; }
-        .local { position: absolute; color: white; font-weight: bold; font-size: 20px; text-shadow: 2px 2px 2px black; transform: translate(-50%, -100%); }
 
+        /* NOMES DOS LOCAIS */
+        .local { position: absolute; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; transform: translate(-50%, -100%); z-index: 15; pointer-events: none; }
+
+        /* O BARCO (SÍMBOLO QUE SE MOVE SOBRE A CARTA) */
         #barco { 
-            position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; 
+            position: absolute; width: 18px; height: 18px; 
             background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
-            z-index: 100; transform: translate(-50%, -50%); border: 1px solid black; 
+            z-index: 100; display: none; transform: translate(-50%, -50%); 
+            border: 1px solid black; box-shadow: 0 0 8px yellow;
         }
 
-        /* PAINEL NO CANTO INFERIOR ESQUERDO */
+        /* PAINEL (Canto Inferior Esquerdo) */
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); padding: 10px; border: 2px solid red; z-index: 200; width: 180px; border-radius: 10px; }
-        #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; }
+        #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; line-height: 1.3; }
+        .destaque { color: yellow; font-size: 16px; font-weight: bold; }
         
-        /* BOTÕES DE ZOOM (+ e -) */
-        .controlo-zoom { display: flex; gap: 5px; margin-bottom: 10px; }
-        .btn-zoom { background: #444; color: white; flex: 1; font-size: 20px; padding: 5px; border: 1px solid white; }
-
+        /* BOTÕES DE MARCAÇÃO E LIGAR */
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        button { font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
-        .btn-pt { background: #333; color: white; padding: 10px; }
-        #btnLigar { background: green; color: white; width: 100%; padding: 15px; margin-bottom: 10px; font-size: 16px; }
+        button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; }
+        .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 10px; font-size: 14px; }
+        .btn-pt { background: #333; color: white; padding: 8px; font-size: 12px; }
+        #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
 
+        /* BÚSSOLA (Canto Inferior Direito) */
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
         
-        .ponto-marcado { position: absolute; width: 12px; height: 12px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
-        .ponto-gps { position: absolute; font-size: 24px; z-index: 40; transform: translate(-50%, -50%); }
+        /* PONTOS DE PESCA */
+        .ponto-marcado { position: absolute; width: 10px; height: 10px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
+        .ponto-gps { position: absolute; font-size: 20px; z-index: 40; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
 
 <div id="contentor-mapa">
-    <div id="mapa">
-        <div id="costa"></div>
-        <div class="local" style="top: 20px; left: 10%;">Burgau</div>
-        <div class="local" style="top: 30px; left: 25%;">Luz</div>
-        <div class="local" style="top: 5px; left: 50%;">Lagos</div>
-        <div class="local" style="top: 15px; left: 70%;">Alvor (Barra)</div>
-        <div class="local" style="top: 35px; left: 90%;">Portimão</div>
-    </div>
+    <svg id="svg-mapa" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
+        <path d="M0,0 L1000,0 L1000,100 C950,110 920,130 900,150 C880,170 860,160 840,150 C820,140 800,130 780,120 C760,110 740,105 720,110 C700,115 680,130 660,140 C640,150 620,140 600,130 C580,120 560,100 540,90 C520,80 500,85 480,95 C460,105 440,130 420,140 C400,150 380,160 360,155 C340,150 320,130 300,120 C280,110 260,115 240,125 C220,135 200,160 180,170 C160,180 140,170 120,160 C100,150 80,145 60,150 C40,155 20,170 0,180 Z" 
+              fill="#8b4513" stroke="#ffdead" stroke-width="2" />
+        
+        <path d="M100,250 Q150,230 200,250 T300,250" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <path d="M500,350 Q550,330 600,350 T700,350" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    </svg>
+
+    <div class="local" style="top: 175px; left: 5%;">Burgau</div>
+    <div class="local" style="top: 165px; left: 22%;">Luz</div>
+    <div class="local" style="top: 155px; left: 45%;">Lagos</div>
+    <div class="local" style="top: 145px; left: 68%;">Alvor</div>
+    <div class="local" style="top: 155px; left: 88%;">Portimão</div>
+
     <div id="barco"></div>
 </div>
 
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR SISTEMA</button>
-    
-    <div class="controlo-zoom">
-        <button class="btn-zoom" onclick="ajustarZoom(0.2)">+</button>
-        <button class="btn-zoom" onclick="ajustarZoom(-0.2)">-</button>
-    </div>
-
     <div id="dados">
         LAT: <span id="lat">00.00000</span><br>
         LON: <span id="lon">00.00000</span><br>
-        VEL: <span id="vel" style="color:yellow; font-size:16px; font-weight:bold;">0.0</span> kn<br>
+        VEL: <span id="vel" class="destaque">0.0</span> kn<br>
         DIST: <span id="dist" style="color:cyan">---</span> m
     </div>
     <div class="grid-botoes">
@@ -85,13 +90,15 @@ gps_aorus.html
 
 <script>
     let pontosSalvos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let posNoMapa = { x: 1500, y: 750 };
-    let zoomAtual = 1.0;
+    let posAtualPixels = { x: 0, y: 0 };
 
-    const latN = 37.130; const latS = 37.060; const lonO = -8.780; const lonE = -8.500;
+    // LIMITES CARTOGRÁFICOS DE LAGOS (Burgau -> Portimão)
+    const latN = 37.135; const latS = 37.055; const lonO = -8.790; const lonE = -8.500;
 
     function iniciarGPS() {
+        if (!navigator.geolocation) { alert("GPS não disponível."); return; }
         document.getElementById('btnLigar').style.display = 'none';
+        
         navigator.geolocation.watchPosition(pos => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
@@ -101,34 +108,26 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(5);
             document.getElementById('vel').innerText = speed;
 
-            posNoMapa.x = ((lon - lonO) / (lonE - lonO)) * 3000;
-            posNoMapa.y = ((latN - lat) / (latN - latS)) * 1500;
+            // CONVERTE LAT/LON PARA PIXELS NO ECRÃ (O Barco move-se agora!)
+            posAtualPixels.x = ((lon - lonO) / (lonE - lonO)) * window.innerWidth;
+            posAtualPixels.y = ((latN - lat) / (latN - latS)) * window.innerHeight;
 
-            atualizarPosicao();
+            const b = document.getElementById('barco');
+            b.style.display = 'block';
+            b.style.left = posAtualPixels.x + "px";
+            b.style.top = posAtualPixels.y + "px";
             
             if (pos.coords.heading) document.getElementById('agulha').style.transform = `rotate(${pos.coords.heading}deg)`;
             atualizarDistancia();
-        }, null, { enableHighAccuracy: true });
+        }, err => { alert("Erro GPS: " + err.message); }, { enableHighAccuracy: true });
+
         desenharPontos();
     }
 
-    function ajustarZoom(valor) {
-        zoomAtual += valor;
-        if (zoomAtual < 0.4) zoomAtual = 0.4;
-        if (zoomAtual > 3.0) zoomAtual = 3.0;
-        atualizarPosicao();
-    }
-
-    function atualizarPosicao() {
-        const dX = (window.innerWidth / 2) - (posNoMapa.x * zoomAtual);
-        const dY = (window.innerHeight / 2) - (posNoMapa.y * zoomAtual);
-        const m = document.getElementById('mapa');
-        m.style.transform = `translate(${dX}px, ${dY}px) scale(${zoomAtual})`;
-    }
-
     function marcar(id) {
-        if (document.getElementById('barco').style.display === 'none') return;
-        pontosSalvos[id] = { x: posNoMapa.x, y: posNoMapa.y, tipo: id === 0 ? "principal" : "comum" };
+        const b = document.getElementById('barco');
+        if (b.style.display === 'none') return; // Só marca se o GPS estiver ligado
+        pontosSalvos[id] = { x: b.style.left, y: b.style.top, tipo: id === 0 ? "principal" : "comum" };
         localStorage.setItem('pontosAorus', JSON.stringify(pontosSalvos));
         desenharPontos();
     }
@@ -140,15 +139,42 @@ gps_aorus.html
             let div = document.createElement('div');
             div.className = p.tipo === "principal" ? 'ponto-marcado' : 'ponto-gps';
             if (p.tipo !== "principal") div.innerText = "📍";
-            div.style.left = p.x + "px"; div.style.top = p.y + "px";
-            document.getElementById('mapa').appendChild(div);
+            div.style.left = p.x; div.style.top = p.y;
+            document.getElementById('mapa').appendChild(div); // Atenção: deve ser contentor-mapa
+        });
+        // Correção: Adicionar ao contentor correto
+        Object.keys(pontosSalvos).forEach(id => {
+            const p = pontosSalvos[id];
+            let div = document.createElement('div');
+            div.className = p.tipo === "principal" ? 'ponto-marcado' : 'ponto-gps';
+            if (p.tipo !== "principal") div.innerText = "📍";
+            div.style.left = p.x; div.style.top = p.y;
+            document.getElementById('contentor-mapa').appendChild(div);
+        });
+    }
+
+    // Função de desenho corrigida para usar o contentor correto
+    function desenharPontos() {
+        document.querySelectorAll('.ponto-marcado, .ponto-gps').forEach(p => p.remove());
+        Object.keys(pontosSalvos).forEach(id => {
+            const p = pontosSalvos[id];
+            let div = document.createElement('div');
+            div.className = p.tipo === "principal" ? 'ponto-marcado' : 'ponto-gps';
+            if (p.tipo !== "principal") div.innerText = "📍";
+            div.style.left = p.x; div.style.top = p.y;
+            document.getElementById('contentor-mapa').appendChild(div);
         });
     }
 
     function atualizarDistancia() {
         if (pontosSalvos[0]) {
-            let d = Math.sqrt(Math.pow(pontosSalvos[0].x - posNoMapa.x, 2) + Math.pow(pontosSalvos[0].y - posNoMapa.y, 2));
-            document.getElementById('dist').innerText = Math.round(d * 8); 
+            // Converte pixels salvos de volta para números
+            let px = parseFloat(pontosSalvos[0].x);
+            let py = parseFloat(pontosSalvos[0].y);
+            // Distância em pixels
+            let d = Math.sqrt(Math.pow(px - posAtualPixels.x, 2) + Math.pow(py - posAtualPixels.y, 2));
+            // Fator de conversão aproximado pixels -> metros para esta escala de Lagos
+            document.getElementById('dist').innerText = Math.round(d * 4.5); 
         }
     }
 </script>
