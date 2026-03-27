@@ -2,136 +2,121 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - NAVEGAÇÃO REAL</title>
+    <title>GPS AORUS - COMANDO LAGOS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: black; color: white; font-family: Arial; overflow: hidden; }
-        
-        /* A CARTA OCUPA TUDO */
         #mapa { width: 100vw; height: 100vh; background-image: url('CartaLagos.png'); background-size: cover; background-position: center; position: absolute; z-index: 1; }
         
-        /* PAINEL NO CANTO INFERIOR ESQUERDO (DEITADO) */
+        /* A CAIXA ORIGINAL NO CANTO INFERIOR ESQUERDO */
         #painel { 
             position: absolute; bottom: 10px; left: 10px; 
-            background: rgba(0,0,0,0.85); padding: 8px; 
+            background: rgba(0,0,0,0.9); padding: 12px; 
             border: 2px solid red; z-index: 100; 
-            border-radius: 8px; display: flex; flex-direction: column; gap: 5px;
-            width: 160px;
+            width: 180px; border-radius: 10px; 
         }
         
-        #dados { color: #00FF00; font-family: monospace; font-size: 13px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .vel-destaque { color: yellow; font-size: 18px; font-weight: bold; }
-
-        /* BOTÕES DE MARCAÇÃO EM GRID */
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        button { padding: 8px; font-weight: bold; border-radius: 4px; border: 1px solid white; font-size: 12px; cursor: pointer; }
-        .btn-ancora { background: red; color: white; grid-column: span 2; }
-        .btn-p { background: #333; color: white; }
+        #dados { color: #00FF00; font-family: monospace; font-size: 16px; margin-bottom: 10px; }
+        .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         
+        /* BOTÕES ORIGINAIS */
+        button { padding: 12px; font-weight: bold; border-radius: 8px; border: 1px solid white; font-size: 14px; }
+        .btn-principal { background: red; color: white; grid-column: span 2; font-size: 16px; }
+        .btn-pt { background: #333; color: white; }
+        #btnLigar { background: green; width: 100%; font-size: 18px; margin-bottom: 10px; }
+        #btnLimpar { background: #111; color: #555; width: 100%; margin-top: 10px; border: none; font-size: 9px; }
+
         /* BÚSSOLA NO CANTO INFERIOR DIREITO */
-        #bussola { position: absolute; bottom: 10px; right: 10px; width: 75px; height: 75px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; }
-        #agulha { position: absolute; top: 8px; left: 35px; width: 4px; height: 30px; background: red; transform-origin: bottom; }
-
-        /* O BARCO (SÍMBOLO QUE SE MOVE) */
-        #barco { 
-            position: absolute; width: 22px; height: 22px; 
-            background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
-            z-index: 50; display: none; transform: translate(-50%, -50%); 
-            border: 1px solid black; box-shadow: 0 0 5px black;
-        }
-
-        .ponto-fixo { position: absolute; font-size: 26px; z-index: 40; transform: translate(-50%, -50%); pointer-events: none; }
-        #btnLigar { background: green; color: white; width: 100%; font-size: 16px; margin-bottom: 5px; }
+        #bussola { position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; border: 3px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 100; }
+        #agulha { position: absolute; top: 10px; left: 38px; width: 4px; height: 30px; background: red; transform-origin: bottom; }
+        
+        /* O BARCO QUE SE MOVE COM O GPS */
+        #barco { position: absolute; width: 20px; height: 20px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 50; display: none; transform: translate(-50%, -50%); border: 1px solid black; }
+        .ponto-marcado { position: absolute; font-size: 28px; z-index: 40; transform: translate(-50%, -50%); pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div id="mapa">
-    <div id="barco"></div>
-</div>
+<div id="mapa"><div id="barco"></div></div>
 
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS</button>
     <div id="dados">
-        VEL: <span id="vel" class="vel-destaque">0.0</span> kn<br>
+        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn<br>
         DIST: <span id="dist" style="color:cyan">---</span> m
     </div>
-    <div class="grid-marcas">
-        <button class="btn-ancora" onclick="marcar(0)">MARCA ⚓</button>
-        <button class="btn-p" onclick="marcar(1)">P1</button>
-        <button class="btn-p" onclick="marcar(2)">P2</button>
-        <button class="btn-p" onclick="marcar(3)">P3</button>
-        <button class="btn-p" onclick="marcar(4)">P4</button>
+    <div class="grid-botoes">
+        <button class="btn-principal" onclick="marcar(0)">MARCA FIXA ⚓</button>
+        <button class="btn-pt" onclick="marcar(1)">P1</button>
+        <button class="btn-pt" onclick="marcar(2)">P2</button>
+        <button class="btn-pt" onclick="marcar(3)">P3</button>
+        <button class="btn-pt" onclick="marcar(4)">P4</button>
     </div>
+    <button id="btnLimpar" onclick="limpar()">LIMPAR TUDO</button>
 </div>
 
 <div id="bussola"><div id="agulha"></div></div>
 
 <script>
-    let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let latBarco, lonBarco;
+    let pontosSalvos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
+    let posAtual = { x: 0, y: 0 };
 
-    // COORDENADAS DA CARTA (Lagos - Ajuste estas se a posição falhar na imagem)
-    const latNorte = 37.12000; 
-    const latSul = 37.08000;
-    const lonOeste = -8.69000;
-    const lonEste = -8.65000;
+    // Limites de Lagos (para o barco se mexer na carta)
+    const latN = 37.12; const latS = 37.08; const lonO = -8.69; const lonE = -8.65;
 
     function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
         navigator.geolocation.watchPosition(pos => {
-            latBarco = pos.coords.latitude;
-            lonBarco = pos.coords.longitude;
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
             const speed = pos.coords.speed ? (pos.coords.speed * 1.94384).toFixed(1) : "0.0";
-            
             document.getElementById('vel').innerText = speed;
-            
-            // CONVERTE LAT/LON PARA PIXELS NO ECRÃ (O Barco move-se agora!)
-            const x = ((lonBarco - lonOeste) / (lonEste - lonOeste)) * window.innerWidth;
-            const y = ((latNorte - latBarco) / (latNorte - latSul)) * window.innerHeight;
+
+            // MOVE O BARCO NO ECRÃ
+            posAtual.x = ((lon - lonO) / (lonE - lonO)) * window.innerWidth;
+            posAtual.y = ((latN - lat) / (latN - latS)) * window.innerHeight;
 
             const b = document.getElementById('barco');
             b.style.display = 'block';
-            b.style.left = x + "px";
-            b.style.top = y + "px";
+            b.style.left = posAtual.x + "px";
+            b.style.top = posAtual.y + "px";
             
             if (pos.coords.heading) document.getElementById('agulha').style.transform = `rotate(${pos.coords.heading}deg)`;
-            
-            atualizarDistancia(x, y);
+            atualizarDistancia();
         }, null, { enableHighAccuracy: true });
-
         desenharPontos();
     }
 
     function marcar(id) {
         const b = document.getElementById('barco');
-        if (b.style.display === 'none') return; // Só marca se o GPS estiver ligado
-        
-        pontos[id] = { x: b.style.left, y: b.style.top, t: id === 0 ? "⚓" : "📍" };
-        localStorage.setItem('pontosAorus', JSON.stringify(pontos));
+        if (b.style.display === 'none') return;
+        pontosSalvos[id] = { x: b.style.left, y: b.style.top, t: id === 0 ? "⚓" : "📍" };
+        localStorage.setItem('pontosAorus', JSON.stringify(pontosSalvos));
         desenharPontos();
     }
 
     function desenharPontos() {
-        document.querySelectorAll('.ponto-fixo').forEach(p => p.remove());
-        Object.values(pontos).forEach(p => {
+        document.querySelectorAll('.ponto-marcado').forEach(p => p.remove());
+        Object.values(pontosSalvos).forEach(p => {
             let div = document.createElement('div');
-            div.className = 'ponto-fixo';
-            div.style.left = p.x;
-            div.style.top = p.y;
+            div.className = 'ponto-marcado';
+            div.style.left = p.x; div.style.top = p.y;
             div.innerText = p.t;
             document.getElementById('mapa').appendChild(div);
         });
     }
 
-    function atualizarDistancia(bx, by) {
-        if (pontos[0]) {
-            let px = parseFloat(pontos[0].x);
-            let py = parseFloat(pontos[0].y);
-            let d = Math.sqrt(Math.pow(px - bx, 2) + Math.pow(py - by, 2));
-            // Multiplicador para converter pixels em metros (estimado para Lagos)
+    function atualizarDistancia() {
+        if (pontosSalvos[0]) {
+            let px = parseFloat(pontosSalvos[0].x);
+            let py = parseFloat(pontosSalvos[0].y);
+            let d = Math.sqrt(Math.pow(px - posAtual.x, 2) + Math.pow(py - posAtual.y, 2));
             document.getElementById('dist').innerText = Math.round(d * 5); 
         }
+    }
+
+    function limpar() {
+        if(confirm("Limpar marcas?")) { localStorage.removeItem('pontosAorus'); location.reload(); }
     }
 </script>
 </body>
