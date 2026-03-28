@@ -2,44 +2,48 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - ESCALA NÁUTICA</title>
+    <title>GPS AORUS - RIGOR ALGARVE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; touch-action: none; }
         #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        /* Mapa largo para dar as 82 milhas de Sagres a VRSA */
-        #mapa-real { position: absolute; width: 10000px; height: 5000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
+        /* 15000px de largura para dar espaço e detalhe às 82 milhas do Algarve */
+        #mapa-real { position: absolute; width: 15000px; height: 5000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
         #costa-svg { width: 100%; height: 100%; }
-        #barco { position: absolute; width: 22px; height: 22px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 1px solid black; box-shadow: 0 0 15px yellow; }
-        
+        #barco { position: absolute; width: 24px; height: 24px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.95); padding: 10px; border: 2px solid red; z-index: 200; width: 185px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; }
-        .destaque { color: yellow; font-size: 18px; font-weight: bold; }
-
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
         .btn-pt { background: #333; color: white; padding: 10px; }
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
         #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 25px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: #777; }
-
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
-        .nome-local { fill: white; font-size: 55px; font-weight: bold; }
-        .ponto-marcado { position: absolute; width: 14px; height: 14px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
+        .nome-local { fill: white; font-size: 60px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="cenario">
     <div id="mapa-real">
-        <svg id="costa-svg" viewBox="0 0 10000 5000">
-            <path d="M0,0 L10000,0 L10000,900 C9200,920 8500,950 7800,1050 L7000,1100 C6000,1200 5000,1250 4200,1150 L3500,1100 C2800,1050 2200,1200 1500,1400 L1000,1300 C600,1200 300,1150 0,1250 Z" fill="#5c3a21" stroke="#d2b48c" stroke-width="15" />
+        <svg id="costa-svg" viewBox="0 0 15000 5000">
+            <path d="M0,0 L15000,0 L15000,1000 
+                     L13000,1050 L11000,1100 L9500,1150 
+                     L8000,1200 L6500,1100 L5000,1050 
+                     L3500,1150 L2500,1400 L1500,1300 
+                     L800,1200 L0,1300 Z" 
+                  fill="#5c3a21" stroke="#d2b48c" stroke-width="20" />
             
-            <text x="350" y="1250" class="nome-local">SAGRES</text>
-            <text x="1850" y="1450" class="nome-local">LAGOS</text>
-            <text x="3500" y="1150" class="nome-local">PORTIMÃO</text>
-            <text x="9600" y="1000" class="nome-local">VRSA</text>
+            <text x="300" y="1150" class="nome-local">SAGRES</text>
+            <text x="1300" y="1150" class="nome-local">BURGAU</text>
+            <text x="2500" y="1300" class="nome-local">LAGOS</text>
+            <text x="3700" y="1100" class="nome-local">ALVOR</text>
+            <text x="5000" y="1000" class="nome-local">PORTIMÃO</text>
+            <text x="7500" y="1100" class="nome-local">ALBUFEIRA</text>
+            <text x="10000" y="1100" class="nome-local">FARO</text>
+            <text x="14000" y="1000" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
@@ -51,8 +55,8 @@ gps_aorus.html
     <div id="dados">
         LAT: <span id="lat">0.0000</span><br>
         LON: <span id="lon">0.0000</span><br>
-        VEL: <span id="vel" class="destaque">0.0</span> kn<br>
-        RUMO: <span id="rumo" style="color:cyan; font-size:16px;">0</span>°
+        VEL: <span id="vel" style="color:yellow; font-size:18px;">0.0</span> kn<br>
+        RUMO: <span id="rumo" style="color:cyan;">0</span>°
     </div>
     <div class="grid-botoes">
         <button class="btn-principal" onclick="marcar(0)">MARCA 🔴</button>
@@ -67,15 +71,13 @@ gps_aorus.html
 
 <script>
     let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let zoom = 0.3, mapX = 0, mapY = 0;
-    let barcoPos = { x: 1850, y: 2000 }; 
+    let zoom = 0.2, mapX = 0, mapY = 0;
+    let barcoPos = { x: 2500, y: 2000 }; 
     let wakeLock = null;
 
-    // COORDENADAS DE BALIZA (Sagres - VRSA)
-    const lonO = -8.9950; // Sagres
-    const lonE = -7.4100; // VRSA
-    const latN = 37.2500; // Norte
-    const latS = 36.7500; // Sul (Alargado para as milhas)
+    // COORDENADAS RÍGIDAS (Sagres -8.99 a VRSA -7.41)
+    const lonO = -9.0500; const lonE = -7.3500;
+    const latN = 37.3000; const latS = 36.7000;
 
     const mapa = document.getElementById('mapa-real');
     const cenario = document.getElementById('cenario');
@@ -91,22 +93,19 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
-            // Conversão Linear de Milhas para Pixels
-            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 10000;
+            // CALIBRAGEM FINAL: 15000px para 1.7 graus de Longitude
+            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 15000;
             barcoPos.y = ((latN - lat) / (latN - latS)) * 5000;
 
             const b = document.getElementById('barco');
-            b.style.display = 'block';
-            b.style.left = barcoPos.x + "px";
-            b.style.top = barcoPos.y + "px";
+            b.style.display = 'block'; b.style.left = barcoPos.x + "px"; b.style.top = barcoPos.y + "px";
 
             let heading = pos.coords.heading || 0;
             document.getElementById('rumo').innerText = Math.round(heading);
             document.getElementById('agulha').style.transform = `rotate(${heading}deg)`;
         }, null, { enableHighAccuracy: true });
 
-        centrarNoBarco();
-        desenhar();
+        centrarNoBarco(); desenhar();
     }
 
     function centrarNoBarco() {
@@ -117,7 +116,6 @@ gps_aorus.html
 
     let evCache = []; let prevDiff = -1;
     let isDragging = false, lastX, lastY;
-    
     cenario.onpointerdown = e => { evCache.push(e); isDragging = true; lastX = e.clientX; lastY = e.clientY; };
     cenario.onpointermove = e => {
         const index = evCache.findIndex(s => s.pointerId === e.pointerId);
@@ -125,12 +123,12 @@ gps_aorus.html
         if (evCache.length === 2) { 
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
-                const fator = curDiff > prevDiff ? 1.015 : 0.985;
+                const fator = curDiff > prevDiff ? 1.01 : 0.99; // Suavidade máxima
                 const midX = (evCache[0].clientX + evCache[1].clientX) / 2;
                 const midY = (evCache[0].clientY + evCache[1].clientY) / 2;
                 const oldZoom = zoom;
                 zoom *= fator;
-                if(zoom < 0.05) zoom = 0.05; if(zoom > 8) zoom = 8;
+                if(zoom < 0.05) zoom = 0.05; if(zoom > 10) zoom = 10;
                 mapX = midX - (midX - mapX) * zoom / oldZoom;
                 mapY = midY - (midY - mapY) * zoom / oldZoom;
             }
@@ -145,17 +143,17 @@ gps_aorus.html
 
     function atualizarTransform() { mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`; }
     function marcar(id) { 
-        pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "vermelho" : "ponto" }; 
-        localStorage.setItem('pontosAorus', JSON.stringify(pontos)); 
-        desenhar(); 
+        pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "red" : "gps" }; 
+        localStorage.setItem('pontosAorus', JSON.stringify(pontos)); desenhar(); 
     }
     function desenhar() {
         document.querySelectorAll('.ponto-marcado, .ponto-gps').forEach(p => p.remove());
         Object.keys(pontos).forEach(id => {
             const p = pontos[id];
             let div = document.createElement('div');
-            div.className = p.t === "vermelho" ? 'ponto-marcado' : 'ponto-gps';
-            if(p.t !== "vermelho") { div.innerText = "📍"; div.style.position = "absolute"; div.style.fontSize = "26px"; div.style.transform = "translate(-50%, -50%)"; }
+            div.className = p.t === "red" ? 'ponto-marcado' : 'ponto-gps';
+            if(p.t !== "red") { div.innerText = "📍"; div.style.position = "absolute"; div.style.fontSize = "26px"; div.style.transform = "translate(-50%, -50%)"; }
+            else { div.style.position = "absolute"; div.style.width = "14px"; div.style.height = "14px"; div.style.background = "red"; div.style.borderRadius = "50%"; div.style.border = "2px solid white"; div.style.transform = "translate(-50%, -50%)"; }
             div.style.left = p.x + "px"; div.style.top = p.y + "px";
             mapa.appendChild(div);
         });
