@@ -2,29 +2,26 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR TOTAL</title>
+    <title>GPS AORUS - CALIBRAÇÃO MERCATOR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; touch-action: none; }
         #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        #mapa-real { position: absolute; width: 12000px; height: 4000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
+        #mapa-real { position: absolute; width: 10000px; height: 6000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
         #costa-svg { width: 100%; height: 100%; }
         #barco { position: absolute; width: 24px; height: 24px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
-        
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.95); padding: 10px; border: 2px solid red; z-index: 200; width: 185px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; line-height: 1.4; }
         .destaque { color: yellow; font-size: 18px; font-weight: bold; }
-
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
         .btn-pt { background: #333; color: white; padding: 10px; }
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
         #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 25px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: #777; }
-
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
-        .nome-local { fill: white; font-size: 45px; font-weight: bold; opacity: 0.8; }
+        .nome-local { fill: white; font-size: 50px; font-weight: bold; text-shadow: 2px 2px black; }
         .ponto-marcado { position: absolute; width: 14px; height: 14px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
     </style>
 </head>
@@ -32,12 +29,12 @@ gps_aorus.html
 
 <div id="cenario">
     <div id="mapa-real">
-        <svg id="costa-svg" viewBox="0 0 12000 4000">
-            <path d="M0,0 L12000,0 L12000,700 C11000,720 10000,750 9500,800 L8500,850 C7500,950 6500,1000 5500,950 L4800,900 C4000,850 3500,850 3000,1100 L2500,1000 C1500,900 800,850 0,950 Z" fill="#5c3a21" stroke="#d2b48c" stroke-width="15" />
-            <text x="200" y="850" class="nome-local">SAGRES</text>
-            <text x="3200" y="1000" class="nome-local">LAGOS</text>
-            <text x="5800" y="850" class="nome-local">PORTIMÃO</text>
-            <text x="11000" y="850" class="nome-local">VRSA</text>
+        <svg id="costa-svg" viewBox="0 0 10000 6000">
+            <path d="M0,0 L10000,0 L10000,800 C9500,820 9000,850 8500,900 L8000,950 C7000,1050 6000,1100 5500,1050 L4800,1000 C4000,950 3200,1100 2400,1350 L1800,1200 C1000,1100 500,1050 0,1150 Z" fill="#5c3a21" stroke="#d2b48c" stroke-width="15" />
+            <text x="200" y="1050" class="nome-local">SAGRES</text>
+            <text x="2400" y="1300" class="nome-local">LAGOS</text>
+            <text x="5500" y="1050" class="nome-local">PORTIMÃO</text>
+            <text x="9500" y="950" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
@@ -65,28 +62,20 @@ gps_aorus.html
 
 <script>
     let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let zoom = 0.25, mapX = 0, mapY = 0;
-    let barcoPos = { x: 3200, y: 1500 }; 
+    let zoom = 0.3, mapX = 0, mapY = 0;
+    let barcoPos = { x: 2400, y: 2000 }; 
     let wakeLock = null;
 
-    // BALIZAS REAIS (Sagres a VRSA)
-    const lonOeste = -8.9900; 
-    const lonEste = -7.4100;  
-    const latNorte = 37.2000; 
-    const latSul = 36.9000;   
+    // CALIBRAGEM RIGOROSA (Sagres a VRSA)
+    const lonO = -8.9950; const lonE = -7.4100;
+    const latN = 37.2500; const latS = 36.8000;
 
     const mapa = document.getElementById('mapa-real');
     const cenario = document.getElementById('cenario');
 
     async function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
-        
-        // FUNÇÃO PARA MANTER ECRÃ LIGADO
-        try {
-            if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-            }
-        } catch (err) { console.log("WakeLock falhou"); }
+        try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
 
         navigator.geolocation.watchPosition(pos => {
             const lat = pos.coords.latitude;
@@ -95,9 +84,9 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
-            // CÁLCULO DE POSIÇÃO RIGOROSO (Regra de 3 simples sobre os 12000px)
-            barcoPos.x = ((lon - lonOeste) / (lonEste - lonOeste)) * 12000;
-            barcoPos.y = ((latNorte - lat) / (latNorte - latSul)) * 4000;
+            // Fórmula de Conversão Linear Calibrada para 10000x6000 pixels
+            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 10000;
+            barcoPos.y = ((latN - lat) / (latN - latS)) * 6000;
 
             const b = document.getElementById('barco');
             b.style.display = 'block';
@@ -119,7 +108,6 @@ gps_aorus.html
         atualizarTransform();
     }
 
-    // ZOOM E ARRASTO SUAVE (PINÇA)
     let evCache = []; let prevDiff = -1;
     let isDragging = false, lastX, lastY;
     
@@ -130,7 +118,7 @@ gps_aorus.html
         if (evCache.length === 2) { 
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
-                const fator = curDiff > prevDiff ? 1.01 : 0.99;
+                const fator = curDiff > prevDiff ? 1.02 : 0.98;
                 const midX = (evCache[0].clientX + evCache[1].clientX) / 2;
                 const midY = (evCache[0].clientY + evCache[1].clientY) / 2;
                 const oldZoom = zoom;
@@ -149,7 +137,11 @@ gps_aorus.html
     cenario.onpointerup = e => { isDragging = false; evCache = []; prevDiff = -1; };
 
     function atualizarTransform() { mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`; }
-    function marcar(id) { pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "vermelho" : "ponto" }; localStorage.setItem('pontosAorus', JSON.stringify(pontos)); desenhar(); }
+    function marcar(id) { 
+        pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "vermelho" : "ponto" }; 
+        localStorage.setItem('pontosAorus', JSON.stringify(pontos)); 
+        desenhar(); 
+    }
     function desenhar() {
         document.querySelectorAll('.ponto-marcado, .ponto-gps').forEach(p => p.remove());
         Object.keys(pontos).forEach(id => {
