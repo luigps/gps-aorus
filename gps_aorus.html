@@ -2,24 +2,44 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - ZOOM SUAVE</title>
+    <title>GPS AORUS - CARTA SUAVE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; touch-action: none; }
         #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        #mapa-real { position: absolute; width: 6000px; height: 4000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
+        
+        /* CARTA COM TRANSIÇÃO MAIS LENTA (0.1s linear) PARA SUAVIZAR O MOVIMENTO */
+        #mapa-real { 
+            position: absolute; width: 6000px; height: 4000px; 
+            transform-origin: 0 0; z-index: 1;
+            transition: transform 0.1s linear; /* Suaviza os saltos do toque */
+        }
+
         #costa-svg { width: 100%; height: 100%; }
-        #barco { position: absolute; width: 24px; height: 24px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
+
+        #barco { 
+            position: absolute; width: 24px; height: 24px; 
+            background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
+            z-index: 100; display: none; transform: translate(-50%, -50%); 
+            border: 2px solid black; box-shadow: 0 0 15px yellow;
+        }
+
+        /* PAINEL INFERIOR ESQUERDO */
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); padding: 10px; border: 2px solid red; z-index: 200; width: 180px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; }
+        
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
         .btn-pt { background: #333; color: white; padding: 10px; }
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
+
+        /* BOTÃO APAGAR (QUADRADO PEQUENO) */
         #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; color: #777; width: 25px; height: 25px; font-size: 14px; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
+        
         .nome-local { fill: white; font-size: 55px; font-weight: bold; }
         .ponto-marcado { position: absolute; width: 14px; height: 14px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
         .ponto-comum { position: absolute; font-size: 26px; z-index: 40; transform: translate(-50%, -50%); }
@@ -66,43 +86,62 @@ gps_aorus.html
     let barcoPos = { x: 2500, y: 1500 };
     let evCache = []; let prevDiff = -1;
 
-    const latN = 37.150, latS = 36.950, lonO = -8.820, lonE = -8.480;
+    // LIMITES DE NAVEGAÇÃO (6 Milhas)
+    const latN = 37.150; const latS = 36.950; const lonO = -8.820; const lonE = -8.480;
     const mapa = document.getElementById('mapa-real');
     const cenario = document.getElementById('cenario');
 
     function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
         navigator.geolocation.watchPosition(pos => {
-            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const lat = pos.coords.latitude; const lon = pos.coords.longitude;
             document.getElementById('lat').innerText = lat.toFixed(4);
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
+
+            // CONVERSÃO RIGOROSA PARA O MAPA
             barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 6000;
             barcoPos.y = ((latN - lat) / (latN - latS)) * 4000;
+
             const b = document.getElementById('barco');
             b.style.display = 'block'; b.style.left = barcoPos.x + "px"; b.style.top = barcoPos.y + "px";
+
             if (pos.coords.heading) document.getElementById('agulha').style.transform = `rotate(${pos.coords.heading}deg)`;
         }, null, { enableHighAccuracy: true });
+        
+        // CENTRAR INICIAL NO BARCO
         mapX = (window.innerWidth / 2) - (barcoPos.x * zoom);
         mapY = (window.innerHeight / 2) - (barcoPos.y * zoom);
         atualizarTransform(); desenhar();
     }
 
+    // CONTROLOS DE TOQUE (ARRASTAR E PINÇA SUAVE)
     let isDragging = false, lastX, lastY;
     cenario.onpointerdown = e => { evCache.push(e); isDragging = true; lastX = e.clientX; lastY = e.clientY; };
     cenario.onpointermove = e => {
         const index = evCache.findIndex(s => s.pointerId === e.pointerId);
         evCache[index] = e;
-        if (evCache.length === 2) { 
+
+        if (evCache.length === 2) { // ZOOM PINÇA (2 DEDOS)
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
-                // ZOOM AFINADO: Fator de 1.02 em vez de 1.05 para ser mais lento
-                const fator = curDiff > prevDiff ? 1.02 : 0.98;
+                // FATOR DE SUAVIZAÇÃO MÁXIMA: 1.01 (1% por clique de toque)
+                const fator = curDiff > prevDiff ? 1.01 : 0.99;
+                
+                // Cálculo para manter o centro do zoom entre os dedos (Atrativo)
+                const midX = (evCache[0].clientX + evCache[1].clientX) / 2;
+                const midY = (evCache[0].clientY + evCache[1].clientY) / 2;
+                
+                // Aplica o zoom centrado no toque
+                const oldZoom = zoom;
                 zoom *= fator;
                 if(zoom < 0.1) zoom = 0.1; if(zoom > 5) zoom = 5;
+                
+                mapX = midX - (midX - mapX) * zoom / oldZoom;
+                mapY = midY - (midY - mapY) * zoom / oldZoom;
             }
             prevDiff = curDiff;
-        } else if (isDragging) { 
+        } else if (isDragging) { // ARRASTAR (1 DEDO)
             mapX += e.clientX - lastX; mapY += e.clientY - lastY;
             lastX = e.clientX; lastY = e.clientY;
         }
@@ -111,7 +150,13 @@ gps_aorus.html
     cenario.onpointerup = e => { isDragging = false; evCache = []; prevDiff = -1; };
 
     function atualizarTransform() { mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`; }
-    function marcar(id) { pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "vermelho" : "ponto" }; localStorage.setItem('pontosAorus', JSON.stringify(pontos)); desenhar(); }
+
+    function marcar(id) {
+        pontos[id] = { x: barcoPos.x, y: barcoPos.y, t: id === 0 ? "vermelho" : "ponto" };
+        localStorage.setItem('pontosAorus', JSON.stringify(pontos));
+        desenhar();
+    }
+
     function desenhar() {
         document.querySelectorAll('.ponto-marcado, .ponto-comum').forEach(p => p.remove());
         Object.keys(pontos).forEach(id => {
@@ -123,6 +168,7 @@ gps_aorus.html
             mapa.appendChild(div);
         });
     }
+
     function limparPontos() { if(confirm("Limpar marcas?")) { pontos = {}; localStorage.removeItem('pontosAorus'); desenhar(); } }
 </script>
 </body>
