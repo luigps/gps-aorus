@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - ALGARVE PRO</title>
+    <title>GPS AORUS - CALIBRAÇÃO FINAL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; touch-action: none; }
@@ -10,23 +10,18 @@ gps_aorus.html
         #mapa-real { position: absolute; width: 15000px; height: 5000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
         #costa-svg { width: 100%; height: 100%; }
         #barco { position: absolute; width: 24px; height: 24px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
-        
-        /* PAINEL DE DADOS */
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.95); padding: 10px; border: 2px solid red; z-index: 200; width: 185px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; line-height: 1.4; }
         .destaque { color: yellow; font-size: 18px; font-weight: bold; }
-
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
         .btn-pt { background: #333; color: white; padding: 10px; }
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
         #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 25px; height: 25px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: #777; }
-
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
         .nome-local { fill: white; font-size: 65px; font-weight: bold; text-shadow: 2px 2px black; }
-        .ponto-marcado { position: absolute; width: 14px; height: 14px; background: red; border-radius: 50%; border: 2px solid white; z-index: 40; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
@@ -34,19 +29,19 @@ gps_aorus.html
 <div id="cenario">
     <div id="mapa-real">
         <svg id="costa-svg" viewBox="0 0 15000 5000">
-            <path d="M0,0 L15000,0 L15000,1000 
-                     L13500,1050 L11500,1100 L9000,1200 
-                     L7500,1150 L6000,1050 L4500,1000 
-                     L3500,1100 L2500,1350 L1800,1250 
-                     L800,1150 L0,1200 Z" 
+            <path d="M0,0 L15000,0 L15000,1200 
+                     L13500,1250 L11500,1300 L9000,1400 
+                     L7500,1350 L6000,1250 L4500,1200 
+                     L3500,1300 L2100,1650 L1800,1550 
+                     L800,1450 L0,1500 Z" 
                   fill="#5c3a21" stroke="#d2b48c" stroke-width="20" />
             
-            <text x="350" y="1100" class="nome-local">SAGRES</text>
-            <text x="2500" y="1250" class="nome-local">LAGOS</text>
-            <text x="4500" y="950" class="nome-local">PORTIMÃO</text>
-            <text x="7500" y="1050" class="nome-local">ALBUFEIRA</text>
-            <text x="10000" y="1050" class="nome-local">FARO</text>
-            <text x="14000" y="950" class="nome-local">VRSA</text>
+            <text x="350" y="1400" class="nome-local">SAGRES</text>
+            <text x="2100" y="1550" class="nome-local">LAGOS</text>
+            <text x="4500" y="1150" class="nome-local">PORTIMÃO</text>
+            <text x="7500" y="1250" class="nome-local">ALBUFEIRA</text>
+            <text x="10000" y="1250" class="nome-local">FARO</text>
+            <text x="14000" y="1150" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
@@ -74,11 +69,11 @@ gps_aorus.html
 
 <script>
     let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let zoom = 0.2, mapX = 0, mapY = 0;
-    let barcoPos = { x: 2500, y: 2500 }; 
+    let zoom = 0.25, mapX = 0, mapY = 0;
+    let barcoPos = { x: 2100, y: 2500 }; 
     let wakeLock = null;
 
-    // COORDENADAS RÍGIDAS CALIBRADAS
+    // COORDENADAS RÍGIDAS DE SAGRES A VRSA
     const lonO = -8.9950; const lonE = -7.4100;
     const latN = 37.3000; const latS = 36.7000;
 
@@ -96,7 +91,7 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
-            // CALIBRAGEM: Mapear Lon/Lat para os 15000x5000 pixels
+            // CALIBRAGEM: Mapear para os 15000x5000 pixels
             barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 15000;
             barcoPos.y = ((latN - lat) / (latN - latS)) * 5000;
 
