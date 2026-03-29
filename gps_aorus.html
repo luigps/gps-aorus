@@ -2,28 +2,23 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - NAVEGAÇÃO LIMPA</title>
+    <title>GPS AORUS - CALIBRAÇÃO MILITAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        /* IMPEDE QUE O CHROME INTERFIRA COM O TOQUE */
-        * { touch-action: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        
+        * { touch-action: none; -webkit-user-select: none; }
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; }
-        #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #001220; }
+        #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         #mapa-real { position: absolute; width: 15000px; height: 5000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
         #costa-svg { width: 100%; height: 100%; }
         #barco { position: absolute; width: 26px; height: 26px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
-        
         #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.95); padding: 10px; border: 2px solid red; z-index: 200; width: 190px; border-radius: 10px; }
         #dados { color: #00FF00; font-family: monospace; font-size: 13px; margin-bottom: 8px; }
         .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; padding: 8px; }
         .btn-principal { background: #ff0000; color: white; grid-column: span 2; padding: 12px; }
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
-        #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: white; font-size: 18px; }
-
+        #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: white; }
         #cursor-visor { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 20px; border: 1px solid cyan; font-family: monospace; font-size: 14px; color: cyan; z-index: 300; pointer-events: none; }
-
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
         #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
         .nome-local { fill: white; font-size: 60px; font-weight: bold; text-shadow: 3px 3px black; }
@@ -37,14 +32,21 @@ gps_aorus.html
 <div id="cenario">
     <div id="mapa-real">
         <svg id="costa-svg" viewBox="0 0 15000 5000">
-            <path d="M0,0 L15000,0 L15000,1500 L13000,1550 L11000,1600 L9000,1700 L7000,1650 L5500,1550 L4000,1500 L3200,1600 L2850,1950 L2500,1850 L1000,1750 L0,1800 Z" fill="#5c3a21" stroke="#d2b48c" stroke-width="20" />
-            <text x="500" y="1700" class="nome-local">SAGRES</text>
-            <text x="1300" y="1650" class="nome-local">BURGAU</text>
-            <text x="2000" y="1750" class="nome-local">LUZ</text>
-            <text x="2500" y="1800" class="nome-local">P. MÓS</text>
-            <text x="2850" y="1850" class="nome-local">LAGOS</text>
-            <text x="5000" y="1450" class="nome-local">PORTIMÃO</text>
-            <text x="14000" y="1400" class="nome-local">VRSA</text>
+            <path d="M0,0 L15000,0 L15000,1800 
+                     L13000,1850 L11000,1900 L9000,2000 
+                     L7000,1950 L5500,1850 L4000,1800 
+                     L3200,1900 L2860,2350 L2835,2150 
+                     L1000,2050 L0,2100 Z" 
+                  fill="#5c3a21" stroke="#d2b48c" stroke-width="20" />
+            
+            <text x="500" y="2000" class="nome-local">SAGRES</text>
+            <text x="1300" y="1950" class="nome-local">BURGAU</text>
+            <text x="2100" y="2050" class="nome-local">LUZ</text>
+            <text x="2600" y="2150" class="nome-local">P. MÓS</text>
+            <text x="2900" y="2380" class="nome-local">PTA. PIEDADE</text>
+            <text x="2900" y="2140" class="nome-local">BARRA LAGOS</text>
+            <text x="5500" y="1750" class="nome-local">PORTIMÃO</text>
+            <text x="14000" y="1700" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
@@ -72,13 +74,14 @@ gps_aorus.html
 
 <script>
     let pontos = JSON.parse(localStorage.getItem('pontosAorus')) || {};
-    let zoom = 0.3, mapX = 0, mapY = 0;
-    let barcoPos = { x: 2850, y: 2500 }; 
+    let zoom = 0.35, mapX = 0, mapY = 0;
+    let barcoPos = { x: 2850, y: 2200 }; 
     let evCache = []; let prevDiff = -1;
     let isDragging = false, lastX, lastY;
 
-    const lonO = -9.0000; const lonE = -7.4000;
-    const latN = 37.3000; const latS = 36.7000;
+    // CALIBRAGEM RÍGIDA COM OS DADOS DO COMANDANTE
+    const lonO = -8.9950; const lonE = -7.4100;
+    const latN = 37.2500; const latS = 36.7500;
 
     const mapa = document.getElementById('mapa-real');
     const cenario = document.getElementById('cenario');
@@ -94,6 +97,7 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
+            // CÁLCULO DE PRECISÃO TOTAL
             barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 15000;
             barcoPos.y = ((latN - lat) / (latN - latS)) * 5000;
 
@@ -106,24 +110,20 @@ gps_aorus.html
         centrarNoBarco(); desenhar();
     }
 
-    // GESTÃO DE TOQUE PROFISSIONAL (SEM BLOQUEIOS DO CHROME)
-    cenario.onpointerdown = e => { evCache.push(e); isDragging = true; lastX = e.clientX; lastY = e.clientY; };
-    
     cenario.onpointermove = e => {
-        const index = evCache.findIndex(s => s.pointerId === e.pointerId);
-        evCache[index] = e;
-
-        // CURSOR DE COORDENADAS
         let xM = (e.clientX - mapX) / zoom; let yM = (e.clientY - mapY) / zoom;
         let cLon = (xM / 15000) * (lonE - lonO) + lonO;
         let cLat = latN - (yM / 5000) * (latN - latS);
         visor.innerText = `LAT: ${cLat.toFixed(4)} | LON: ${cLon.toFixed(4)}`;
 
-        if (evCache.length === 2) { // ZOOM SUAVE (PINÇA)
+        const index = evCache.findIndex(s => s.pointerId === e.pointerId);
+        evCache[index] = e;
+
+        if (evCache.length === 2) {
             isDragging = false;
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
-                const fator = curDiff > prevDiff ? 1.015 : 0.985; // VELOCIDADE REPOSTA
+                const fator = curDiff > prevDiff ? 1.015 : 0.985;
                 const midX = (evCache[0].clientX + evCache[1].clientX) / 2;
                 const midY = (evCache[0].clientY + evCache[1].clientY) / 2;
                 const oldZoom = zoom;
@@ -133,13 +133,14 @@ gps_aorus.html
                 mapY = midY - (midY - mapY) * zoom / oldZoom;
             }
             prevDiff = curDiff;
-        } else if (isDragging) { // ARRASTO LIVRE
+        } else if (isDragging) {
             mapX += e.clientX - lastX; mapY += e.clientY - lastY;
             lastX = e.clientX; lastY = e.clientY;
         }
         atualizarTransform();
     };
 
+    cenario.onpointerdown = e => { evCache.push(e); isDragging = true; lastX = e.clientX; lastY = e.clientY; };
     cenario.onpointerup = e => { isDragging = false; evCache = evCache.filter(p => p.pointerId !== e.pointerId); prevDiff = -1; };
 
     function centrarNoBarco() {
