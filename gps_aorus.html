@@ -2,88 +2,86 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR TOTAL</title>
+    <title>GPS AORUS - RIGOR DE MAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #000a15; color: white; font-family: Arial, sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #000a15; color: white; font-family: Arial; overflow: hidden; }
         #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
         
-        /* Mapa de alta escala para precisão */
-        #mapa-real { 
-            position: absolute; width: 18000px; height: 6000px; 
-            transform-origin: 0 0; z-index: 1; 
-        }
-
+        /* Mapa de alta escala para bater com as milhas */
+        #mapa-real { position: absolute; width: 20000px; height: 7000px; transform-origin: 0 0; z-index: 1; }
         #costa-svg { width: 100%; height: 100%; }
+        
         #barco { 
-            position: absolute; width: 28px; height: 28px; background: yellow; 
+            position: absolute; width: 30px; height: 30px; background: yellow; 
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; 
             display: none; transform: translate(-50%, -50%); border: 2px solid black; 
         }
         
-        /* PAINEL DE DADOS - QUADRADO VERDE */
+        /* QUADRADO VERDE - DADOS REAIS */
         #painel { 
-            position: absolute; bottom: 20px; left: 20px; background: rgba(0,20,0,0.95); 
-            padding: 15px; border: 3px solid #00FF00; z-index: 200; width: 230px; border-radius: 10px; 
+            position: absolute; bottom: 20px; left: 20px; background: rgba(0,30,0,0.95); 
+            padding: 15px; border: 3px solid #00FF00; z-index: 200; width: 240px; border-radius: 10px; 
         }
         
-        #dados { color: #00FF00; font-family: 'Courier New', monospace; font-size: 15px; font-weight: bold; line-height: 1.8; }
-        #btnLigar { background: #008800; color: white; width: 100%; padding: 18px; margin-bottom: 12px; font-size: 16px; border: 2px solid #00FF00; border-radius: 8px; cursor: pointer; }
+        #dados { color: #00FF00; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; line-height: 1.8; }
+        #btnLigar { background: #008800; color: white; width: 100%; padding: 18px; margin-bottom: 12px; font-size: 18px; border: 2px solid #00FF00; border-radius: 8px; cursor: pointer; }
         
-        .nome-local { fill: white; font-size: 70px; font-weight: bold; text-shadow: 4px 4px black; }
-        .marca-vermelha { position: absolute; width: 20px; height: 20px; background: red; border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); z-index: 50; }
+        .nome-local { fill: white; font-size: 75px; font-weight: bold; text-shadow: 4px 4px black; }
+        .marca { position: absolute; width: 20px; height: 20px; background: red; border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); z-index: 50; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div id="cenario">
     <div id="mapa-real">
-        <svg id="costa-svg" viewBox="0 0 18000 6000">
-            <path d="M0,0 L18000,0 L18000,1200 
-                     L16000,1300 L13000,1450 L10500,1400 L8000,1300 
-                     L6500,1250 L5000,1200 L4000,1350 L3100,1700 
-                     L2700,1900 L2400,1750 L1100,1650 L0,1700 Z" 
-                  fill="#4d3319" stroke="#d2b48c" stroke-width="30" />
+        <svg id="costa-svg" viewBox="0 0 20000 7000">
+            <path d="M0,0 L20000,0 L20000,1200 
+                     L18000,1300 L15000,1500 L12000,1400 L9500,1300 
+                     L7500,1200 L5500,1150 L4200,1300 L3200,1650 
+                     L2850,1950 L2500,1800 L1200,1700 L0,1750 Z" 
+                  fill="#3d2b1f" stroke="#c2a68c" stroke-width="35" />
             
-            <text x="500" y="1500" class="nome-local">SAGRES</text>
-            <text x="1300" y="1550" class="nome-local">BURGAU</text>
-            <text x="2000" y="1650" class="nome-local">LUZ</text>
-            <text x="2500" y="1700" class="nome-local">P.MÓS</text>
-            <text x="2900" y="1800" class="nome-local">LAGOS (BARRA)</text>
-            <text x="5200" y="1100" class="nome-local">PORTIMÃO</text>
-            <text x="14000" y="1100" class="nome-local">VRSA</text>
+            <text x="600" y="1550" class="nome-local">SAGRES</text>
+            <text x="1400" y="1600" class="nome-local">BURGAU</text>
+            <text x="2100" y="1700" class="nome-local">LUZ</text>
+            <text x="2600" y="1750" class="nome-local">P.MÓS</text>
+            <text x="3000" y="1900" class="nome-local">LAGOS (BARRA)</text>
+            <text x="5600" y="1050" class="nome-local">PORTIMÃO</text>
+            <text x="16000" y="1100" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
 </div>
 
 <div id="painel">
-    <button id="btnLigar" onclick="iniciarGPS()">LIGAR SISTEMA AORUS</button>
+    <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
     <div id="dados">
-        LAT: <span id="txtLat">---</span><br>
-        LON: <span id="txtLon">---</span><br>
+        LAT: <span id="txtLat">00°00.0000</span><br>
+        LON: <span id="txtLon">000°00.0000</span><br>
         VEL: <span id="vel" style="color:yellow; font-size:22px;">0.0</span> kn<br>
         RUMO: <span id="rumo" style="color:cyan;">000</span>°
     </div>
-    <button style="width:100%; background:red; color:white; border:none; padding:12px; margin-top:12px; font-weight:bold; border-radius:6px;" onclick="marcar()">MARCAR 🔴</button>
+    <button style="width:100%; background:red; color:white; border:none; padding:12px; margin-top:10px; font-weight:bold; border-radius:6px;" onclick="marcar()">MARCAR 🔴</button>
 </div>
 
 <script>
     let zoom = 0.25, mapX = 0, mapY = 0;
-    let barcoPos = { x: 2900, y: 2500 };
+    let barcoPos = { x: 3000, y: 2500 };
     let evCache = []; let prevDiff = -1;
     let lastX, lastY;
 
-    // BALIZAS CALIBRADAS
+    // BALIZAS REAIS (LONGITUDE NEGATIVA PARA PORTUGAL)
     const lonO = -9.0000, lonE = -7.3000, latN = 37.3500, latS = 36.6000;
 
-    function formatarCoord(valor, isLat) {
+    // FORMATO EXIGIDO: 37°06.2255
+    function formatar(valor, isLat) {
         let absV = Math.abs(valor);
         let g = Math.floor(absV);
         let m = ((absV - g) * 60).toFixed(4);
         let p = isLat ? "" : (g < 100 ? (g < 10 ? "00" : "0") : "");
-        return `${p}${g}° ${m}'`;
+        return `${p}${g}°${m}`;
     }
 
     async function iniciarGPS() {
@@ -94,15 +92,15 @@ gps_aorus.html
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             
-            // ATUALIZAÇÃO DO PAINEL
-            document.getElementById('txtLat').textContent = formatarCoord(lat, true);
-            document.getElementById('txtLon').textContent = formatarCoord(lon, false);
+            // ATUALIZAÇÃO DO QUADRADO VERDE
+            document.getElementById('txtLat').textContent = formatar(lat, true);
+            document.getElementById('txtLon').textContent = formatar(lon, false);
             document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
             document.getElementById('rumo').textContent = Math.round(pos.coords.heading || 0).toString().padStart(3, '0');
 
-            // CÁLCULO DO BARCO NO MAPA
-            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 18000;
-            barcoPos.y = ((latN - lat) / (latN - latS)) * 6000;
+            // CÁLCULO DO BARCO
+            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 20000;
+            barcoPos.y = ((latN - lat) / (latN - latS)) * 7000;
 
             const b = document.getElementById('barco');
             b.style.display = 'block'; b.style.left = barcoPos.x + "px"; b.style.top = barcoPos.y + "px";
@@ -114,27 +112,26 @@ gps_aorus.html
     const cenario = document.getElementById('cenario');
     const mapa = document.getElementById('mapa-real');
 
-    // NAVEGAÇÃO NA CARTA (FLEXÍVEL)
+    // ARRASTO E ZOOM (SUAVE)
     cenario.onpointerdown = e => { lastX = e.clientX; lastY = e.clientY; evCache.push(e); };
-    
     cenario.onpointermove = e => {
         const index = evCache.findIndex(s => s.pointerId === e.pointerId);
         evCache[index] = e;
 
-        if (evCache.length === 2) { // Zoom suave
+        if (evCache.length === 2) {
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
                 let fator = curDiff > prevDiff ? 1.015 : 0.985;
                 let oldZ = zoom; zoom *= fator;
-                if(zoom < 0.05) zoom = 0.05; if(zoom > 8) zoom = 8;
+                if(zoom < 0.04) zoom = 0.04; if(zoom > 8) zoom = 8;
                 let midX = (evCache[0].clientX + evCache[1].clientX) / 2;
                 let midY = (evCache[0].clientY + evCache[1].clientY) / 2;
                 mapX = midX - (midX - mapX) * zoom / oldZ;
                 mapY = midY - (midY - mapY) * zoom / oldZ;
             }
             prevDiff = curDiff;
-        } else if (evCache.length === 1) { // Arrasto
-            if (lastX) { mapX += e.clientX - lastX; mapY += e.clientY - lastY; }
+        } else if (evCache.length === 1 && lastX) {
+            mapX += e.clientX - lastX; mapY += e.clientY - lastY;
             lastX = e.clientX; lastY = e.clientY;
         }
         mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
@@ -150,7 +147,7 @@ gps_aorus.html
 
     function marcar() {
         let d = document.createElement('div');
-        d.className = 'marca-vermelha';
+        d.className = 'marca';
         d.style.left = barcoPos.x + "px"; d.style.top = barcoPos.y + "px";
         mapa.appendChild(d);
     }
