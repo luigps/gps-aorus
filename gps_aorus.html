@@ -6,78 +6,83 @@ gps_aorus.html
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #000510; color: #00FF00; font-family: 'Courier New', monospace; overflow: hidden; }
         #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
-        #mapa-real { position: absolute; width: 18000px; height: 6000px; transform-origin: 0 0; z-index: 1; transition: transform 0.1s linear; }
+        
+        /* Mapa Calibrado */
+        #mapa-real { position: absolute; width: 20000px; height: 8000px; transform-origin: 0 0; z-index: 1; }
         #costa-svg { width: 100%; height: 100%; }
-        #barco { position: absolute; width: 28px; height: 28px; background: yellow; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; display: none; transform: translate(-50%, -50%); border: 2px solid black; box-shadow: 0 0 15px yellow; }
         
-        #painel { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.95); padding: 12px; border: 2px solid #00FF00; z-index: 200; width: 220px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,255,0,0.3); }
-        #dados { color: #00FF00; font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; line-height: 1.6; }
-        .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
-        button { font-weight: bold; border-radius: 6px; cursor: pointer; border: 1px solid white; padding: 10px; }
-        .btn-principal { background: #ff0000; color: white; grid-column: span 2; }
-        #btnLigar { background: #008800; color: white; width: 100%; padding: 15px; margin-bottom: 10px; font-size: 16px; border: none; border-radius: 8px; }
+        #barco { 
+            position: absolute; width: 30px; height: 30px; background: yellow; 
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; 
+            display: none; transform: translate(-50%, -50%); border: 2px solid black; 
+        }
         
-        #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
-        #agulha { position: absolute; top: 8px; left: 33px; width: 4px; height: 25px; background: red; transform-origin: bottom; }
-        .nome-local { fill: white; font-size: 65px; font-weight: bold; text-shadow: 3px 3px black; }
+        /* QUADRADO DE DADOS - O SEU COMANDO */
+        #painel { 
+            position: absolute; bottom: 15px; left: 15px; 
+            background: rgba(0,20,0,0.95); padding: 15px; 
+            border: 3px solid #00FF00; z-index: 200; width: 240px; border-radius: 5px; 
+        }
+        
+        #dados { font-size: 15px; font-weight: bold; line-height: 1.8; }
+        #btnLigar { background: #004400; color: white; width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid #00FF00; font-weight: bold; cursor: pointer; }
+        
+        .nome-local { fill: #00FF00; font-size: 70px; font-weight: bold; }
+        .marca-vermelha { position: absolute; width: 20px; height: 20px; background: red; border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); z-index: 50; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div id="cenario">
     <div id="mapa-real">
-        <svg id="costa-svg" viewBox="0 0 18000 6000">
-            <path d="M0,0 L18000,0 L18000,1200 L16000,1300 L14000,1400 L11500,1550 L9000,1450 L7500,1350 L5500,1300 L4200,1400 L3200,1650 L2800,1500 L1000,1400 L0,1450 Z" fill="#5c3a21" stroke="#d2b48c" stroke-width="25" />
-            <text x="400" y="1400" class="nome-local">SAGRES</text>
-            <text x="1350" y="1350" class="nome-local">BURGAU</text>
-            <text x="1900" y="1450" class="nome-local">LUZ</text>
-            <text x="2450" y="1550" class="nome-local">P.MÓS</text>
-            <text x="2900" y="1600" class="nome-local">LAGOS</text>
-            <text x="4400" y="1350" class="nome-local">ALVOR</text>
-            <text x="5800" y="1250" class="nome-local">PORTIMÃO</text>
-            <text x="8800" y="1350" class="nome-local">ALBUFEIRA</text>
-            <text x="11000" y="1450" class="nome-local">VILAMOURA</text>
-            <text x="13500" y="1500" class="nome-local">FARO</text>
-            <text x="15500" y="1400" class="nome-local">TAVIRA</text>
-            <text x="17200" y="1250" class="nome-local">VRSA</text>
+        <svg id="costa-svg" viewBox="0 0 20000 8000">
+            <path d="M0,0 L20000,0 L20000,2000 
+                     L18000,2100 L15000,2500 L12000,2400 L9000,2200 
+                     L6000,2100 L4500,2300 L3800,2400 L3200,2350 
+                     L1500,2200 L500,2300 L0,2200 Z" 
+                  fill="#1a1a1a" stroke="#00FF00" stroke-width="30" />
+            
+            <text x="500" y="2100" class="nome-local">SAGRES</text>
+            <text x="2100" y="2100" class="nome-local">BURGAU</text>
+            <text x="3200" y="2250" class="nome-local">LUZ</text>
+            <text x="3800" y="2300" class="nome-local">P.MÓS</text>
+            <text x="4300" y="2350" class="nome-local">LAGOS</text>
+            <text x="5500" y="2100" class="nome-local">ALVOR</text>
+            <text x="7000" y="2000" class="nome-local">PORTIMÃO</text>
+            <text x="18000" y="2000" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
 </div>
 
 <div id="painel">
-    <button id="btnLigar" onclick="iniciarGPS()">LIGAR SISTEMA</button>
+    <button id="btnLigar" onclick="iniciarGPS()">LIGAR SISTEMA AORUS</button>
     <div id="dados">
-        LAT: <span id="txtLat">37° 00.0000</span><br>
-        LON: <span id="txtLon">008° 00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn<br>
-        RUMO: <span id="rumo" style="color:cyan;">000</span>°
+        LAT: <span id="txtLat">37° 00.0000'</span><br>
+        LON: <span id="txtLon">008° 00.0000'</span><br>
+        VEL: <span id="vel">0.0</span> kn<br>
+        RUMO: <span id="rumo">000</span>°
     </div>
-    <div class="grid-botoes">
-        <button class="btn-principal" onclick="marcar(0)">MARCA 🔴</button>
-        <button onclick="marcar(1)">P1</button>
-        <button onclick="marcar(2)">P2</button>
-    </div>
+    <button style="width:100%; background:red; color:white; margin-top:10px;" onclick="marcar()">MARCAR 🔴</button>
 </div>
 
-<div id="bussola"><div id="agulha"></div></div>
-
 <script>
-    let zoom = 0.25, mapX = 0, mapY = 0;
-    let barcoPos = { x: 3000, y: 2500 };
+    let zoom = 0.3, mapX = 0, mapY = 0;
+    let barcoPos = { x: 4300, y: 3000 };
     let evCache = []; let prevDiff = -1;
-    let isDragging = false, lastX, lastY;
 
-    const lonO = -9.0000, lonE = -7.3000, latN = 37.3500, latS = 36.6000;
+    // BALIZAS EXATAS (SAGRES -> VRSA)
+    const lonO = -9.0000, lonE = -7.3000, latN = 37.3000, latS = 36.6000;
 
-    function toGrausMinutos(coord, isLat) {
-        let valor = Math.abs(coord);
-        let graus = Math.floor(valor);
-        let minutos = ((valor - graus) * 60).toFixed(4);
-        let prefixo = isLat ? "" : (graus < 100 ? "00" : (graus < 10 ? "0" : ""));
-        return `${prefixo}${graus}° ${minutos}`;
+    // CONVERSOR PARA GRAUS E MINUTOS DECIMAIS
+    function formatarCoord(valor, isLat) {
+        let absV = Math.abs(valor);
+        let g = Math.floor(absV);
+        let m = ((absV - g) * 60).toFixed(4);
+        let prefixo = isLat ? "" : (g < 10 ? "00" : (g < 100 ? "0" : ""));
+        return `${prefixo}${g}° ${m}'`;
     }
 
     async function iniciarGPS() {
@@ -88,70 +93,75 @@ gps_aorus.html
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             
-            document.getElementById('txtLat').textContent = toGrausMinutos(lat, true);
-            document.getElementById('txtLon').textContent = toGrausMinutos(lon, false);
+            document.getElementById('txtLat').textContent = formatarCoord(lat, true);
+            document.getElementById('txtLon').textContent = formatarCoord(lon, false);
             document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
-            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 18000;
-            barcoPos.y = ((latN - lat) / (latN - latS)) * 6000;
+            // CÁLCULO DE POSIÇÃO NO MAPA (X/Y)
+            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 20000;
+            barcoPos.y = ((latN - lat) / (latN - latS)) * 8000;
 
             const b = document.getElementById('barco');
-            b.style.display = 'block'; b.style.left = barcoPos.x + "px"; b.style.top = barcoPos.y + "px";
+            b.style.display = 'block'; 
+            b.style.left = barcoPos.x + "px"; 
+            b.style.top = barcoPos.y + "px";
             
-            let rumo = Math.round(pos.coords.heading || 0);
-            document.getElementById('rumo').textContent = rumo.toString().padStart(3, '0');
-            document.getElementById('agulha').style.transform = `rotate(${rumo}deg)`;
+            document.getElementById('rumo').textContent = Math.round(pos.coords.heading || 0).toString().padStart(3, '0');
         }, null, { enableHighAccuracy: true });
         centrarNoBarco();
     }
 
-    // TOQUE E ARRASTO (CARTA FLEXÍVEL)
     const cenario = document.getElementById('cenario');
     const mapa = document.getElementById('mapa-real');
 
-    cenario.onpointerdown = e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; evCache.push(e); };
-    
+    // ARRASTO E ZOOM FLEXÍVEL
     cenario.onpointermove = e => {
+        let xM = (e.clientX - mapX) / zoom; 
+        let yM = (e.clientY - mapY) / zoom;
+        let cLon = (xM / 20000) * (lonE - lonO) + lonO;
+        let cLat = latN - (yM / 8000) * (latN - latS);
+
+        // Se o senhor tocar/arrastar, o Quadrado Verde mostra a coordenada do local
+        document.getElementById('txtLat').textContent = formatarCoord(cLat, true);
+        document.getElementById('txtLon').textContent = formatarCoord(cLon, false);
+
         const index = evCache.findIndex(s => s.pointerId === e.pointerId);
         evCache[index] = e;
 
         if (evCache.length === 2) {
-            isDragging = false;
             const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
             if (prevDiff > 0) {
-                const fator = curDiff > prevDiff ? 1.02 : 0.98;
-                const midX = (evCache[0].clientX + evCache[1].clientX) / 2;
-                const midY = (evCache[0].clientY + evCache[1].clientY) / 2;
-                const oldZ = zoom;
-                zoom *= fator;
+                let fator = curDiff > prevDiff ? 1.02 : 0.98;
+                let midX = (evCache[0].clientX + evCache[1].clientX) / 2;
+                let midY = (evCache[0].clientY + evCache[1].clientY) / 2;
+                let oldZ = zoom; zoom *= fator;
                 if(zoom < 0.02) zoom = 0.02; if(zoom > 8) zoom = 8;
                 mapX = midX - (midX - mapX) * zoom / oldZ;
                 mapY = midY - (midY - mapY) * zoom / oldZ;
             }
             prevDiff = curDiff;
-        } else if (isDragging) {
-            mapX += e.clientX - lastX; mapY += e.clientY - lastY;
+        } else if (evCache.length === 1) {
+            if (lastX) { mapX += e.clientX - lastX; mapY += e.clientY - lastY; }
             lastX = e.clientX; lastY = e.clientY;
-            
-            // MOSTRA COORDENADA DO TOQUE NO QUADRADO SE ESTIVER PARADO
-            let xM = (e.clientX - mapX) / zoom; let yM = (e.clientY - mapY) / zoom;
-            let cLon = (xM / 18000) * (lonE - lonO) + lonO;
-            let cLat = latN - (yM / 6000) * (latN - latS);
-            document.getElementById('txtLat').textContent = toGrausMinutos(cLat, true);
-            document.getElementById('txtLon').textContent = toGrausMinutos(cLon, false);
         }
         mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
     };
 
-    cenario.onpointerup = e => { isDragging = false; evCache = evCache.filter(p => p.pointerId !== e.pointerId); prevDiff = -1; };
+    cenario.onpointerdown = e => { evCache.push(e); lastX = e.clientX; lastY = e.clientY; };
+    cenario.onpointerup = e => { evCache = evCache.filter(p => p.pointerId !== e.pointerId); lastX = null; prevDiff = -1; };
 
     function centrarNoBarco() {
         mapX = (window.innerWidth / 2) - (barcoPos.x * zoom);
         mapY = (window.innerHeight / 2) - (barcoPos.y * zoom);
         mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
     }
-    
-    function marcar(id) { /* Função de pontos mantida */ }
+
+    function marcar() {
+        let d = document.createElement('div');
+        d.className = 'marca-vermelha';
+        d.style.left = barcoPos.x + "px"; d.style.top = barcoPos.y + "px";
+        mapa.appendChild(d);
+    }
 </script>
 </body>
 </html>
