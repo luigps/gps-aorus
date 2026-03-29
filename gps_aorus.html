@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR DA BARRA</title>
+    <title>GPS AORUS - RIGOR DE POSIÇÃO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; padding: 0; background: #001220; color: white; font-family: Arial; overflow: hidden; touch-action: none; }
@@ -19,7 +19,6 @@ gps_aorus.html
         #btnLigar { background: green; color: white; width: 100%; padding: 12px; margin-bottom: 8px; font-size: 16px; border: none; }
         #btnApagar { position: absolute; top: 5px; right: 5px; background: #222; width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 1px solid #444; color: white; font-size: 18px; }
 
-        /* CURSOR DE COORDENADAS */
         #cursor-visor { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 20px; border: 1px solid cyan; font-family: monospace; font-size: 14px; color: cyan; z-index: 300; pointer-events: none; }
 
         #bussola { position: absolute; bottom: 10px; right: 10px; width: 70px; height: 70px; border: 2px solid white; border-radius: 50%; background: rgba(0,0,0,0.7); z-index: 200; }
@@ -36,19 +35,19 @@ gps_aorus.html
     <div id="mapa-real">
         <svg id="costa-svg" viewBox="0 0 15000 5000">
             <path d="M0,0 L15000,0 L15000,1500 
-                     L12000,1550 L10000,1650 L8000,1600 
-                     L6000,1500 L4500,1450 L3500,1600 
-                     L3000,1750 L2800,1950 L2500,1850 
-                     L1200,1750 L0,1800 Z" 
+                     L13000,1550 L11000,1600 L9000,1700 
+                     L7000,1650 L5500,1550 L4000,1500 
+                     L3200,1600 L2850,1950 L2500,1850 
+                     L1000,1750 L0,1800 Z" 
                   fill="#5c3a21" stroke="#d2b48c" stroke-width="20" />
             
-            <text x="400" y="1700" class="nome-local">SAGRES</text>
+            <text x="500" y="1700" class="nome-local">SAGRES</text>
             <text x="1300" y="1650" class="nome-local">BURGAU</text>
             <text x="2000" y="1750" class="nome-local">LUZ</text>
             <text x="2500" y="1800" class="nome-local">P. MÓS</text>
-            <text x="2850" y="1950" class="nome-local">LAGOS (BARRA)</text>
+            <text x="2850" y="1850" class="nome-local">LAGOS</text>
             <text x="5000" y="1450" class="nome-local">PORTIMÃO</text>
-            <text x="14000" y="1450" class="nome-local">VRSA</text>
+            <text x="14000" y="1400" class="nome-local">VRSA</text>
         </svg>
         <div id="barco"></div>
     </div>
@@ -80,6 +79,7 @@ gps_aorus.html
     let barcoPos = { x: 2850, y: 2500 }; 
     let wakeLock = null;
 
+    // COORDENADAS RÍGIDAS (Sagres a VRSA)
     const lonO = -9.0000; const lonE = -7.4000;
     const latN = 37.3000; const latS = 36.7000;
 
@@ -97,6 +97,7 @@ gps_aorus.html
             document.getElementById('lon').innerText = lon.toFixed(4);
             document.getElementById('vel').innerText = (pos.coords.speed * 1.94 || 0).toFixed(1);
 
+            // VOLTA AO CÁLCULO ANTERIOR QUE ESTAVA BEM
             barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 15000;
             barcoPos.y = ((latN - lat) / (latN - latS)) * 5000;
 
@@ -111,7 +112,6 @@ gps_aorus.html
         centrarNoBarco(); desenhar();
     }
 
-    // LEITURA DE COORDENADAS NO CURSOR
     cenario.onpointermove = e => {
         let xMapa = (e.clientX - mapX) / zoom;
         let yMapa = (e.clientY - mapY) / zoom;
@@ -155,7 +155,7 @@ gps_aorus.html
         });
     }
 
-    function limparPontos() { if(confirm("Apagar todos os pontos?")) { pontos = {}; localStorage.removeItem('pontosAorus'); desenhar(); } }
+    function limparPontos() { if(confirm("Limpar marcas?")) { pontos = {}; localStorage.removeItem('pontosAorus'); desenhar(); } }
 </script>
 </body>
 </html>
