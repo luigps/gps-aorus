@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR ESTÁVEL</title>
+    <title>GPS AORUS - NAVEGAÇÃO TOTAL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -13,22 +13,21 @@ gps_aorus.html
         
         #map-container { 
             width: 100vw; height: 100vh; 
-            perspective: 1000px; 
+            perspective: 1100px; 
             overflow: hidden;
             position: absolute; top: 0; left: 0; z-index: 1;
         }
         
-        /* Ajuste equilibrado para não bloquear o sistema */
+        /* Escala final para cobrir o último centímetro */
         #map { 
-            width: 150%; height: 160%; 
-            left: -25%; top: -30%; 
+            width: 165%; height: 175%; 
+            left: -32.5%; top: -40%; 
             position: absolute;
-            transition: transform 0.5s ease-out; 
+            transition: transform 0.6s ease-out; 
         }
         
-        /* Vista de Horizonte (TimeZero) sem sobrecarregar o processador */
         .vista-3d { 
-            transform: rotateX(50deg) translateY(12%) scale(1.1);
+            transform: rotateX(52deg) translateY(18%) scale(1.15);
         }
 
         #btnVista { 
@@ -39,22 +38,22 @@ gps_aorus.html
 
         #painel { 
             position: absolute; bottom: 20px; left: 10px; 
-            background: rgba(0,25,0,0.92); padding: 15px; 
+            background: rgba(0,25,0,0.95); padding: 15px; 
             border: 3px solid #00FF00; z-index: 1000; 
-            width: 250px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace;
+            width: 255px; border-radius: 10px; color: #00FF00;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 25px black;
         }
         #dados { font-size: 16px; font-weight: bold; line-height: 1.7; margin-bottom: 8px; }
-        #btnLigar { background: #004400; color: white; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        #btnLigar { background: #005500; color: white; width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid #00FF00; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
         
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .btn-vermelho { background: #b00 !important; color: white !important; grid-column: span 2; }
+        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-vermelho { background: #c00 !important; color: white !important; grid-column: span 2; }
 
         .seta-barco {
             width: 0; height: 0; 
             border-left: 10px solid transparent; border-right: 10px solid transparent;
-            border-bottom: 25px solid yellow;
+            border-bottom: 26px solid yellow;
         }
     </style>
 </head>
@@ -71,10 +70,10 @@ gps_aorus.html
     <div id="dados">
         LAT: <span id="txtLat">37°00.0000</span><br>
         LON: <span id="txtLon">008°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow;">0.0</span> kn
+        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (RECIFE)</button>
+        <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (OBJETO)</button>
         <button class="btn-m" onclick="marcar(1)">P1</button>
         <button class="btn-m" onclick="marcar(2)">P2</button>
         <button class="btn-m" onclick="marcar(3)">P3</button>
@@ -83,11 +82,11 @@ gps_aorus.html
 </div>
 
 <script>
-    let mapa, barco, camada;
+    let mapa, barco, camada, wakeLock = null;
     let latA, lonA, modo3D = false;
     let pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {};
 
-    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 15, zoomControl: false, attributionControl: false });
+    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 16, zoomControl: false, attributionControl: false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
@@ -112,13 +111,21 @@ gps_aorus.html
 
     async function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
+        
+        // BLOQUEIO PARA O ECRÃ NÃO APAGAR
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) { console.log("WakeLock não suportado"); }
+
         navigator.geolocation.watchPosition(pos => {
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             document.getElementById('txtLat').textContent = formatar(latA, true);
             document.getElementById('txtLon').textContent = formatar(lonA, false);
             document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
             if (!barco) {
-                barco = L.marker([latA, lonA], { icon: L.divIcon({className:'seta-barco', iconAnchor:[10,12]}) }).addTo(mapa);
+                barco = L.marker([latA, lonA], { icon: L.divIcon({className:'seta-barco', iconAnchor:[10,13]}) }).addTo(mapa);
                 mapa.setView([latA, lonA], 17);
             } else { barco.setLatLng([latA, lonA]); }
         }, null, { enableHighAccuracy: true });
@@ -135,7 +142,7 @@ gps_aorus.html
     function desenhar() {
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
-            L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 7, color: 'white', weight: 2, fillColor: 'red', fillOpacity: 1}).addTo(camada);
+            L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 8, color: 'white', weight: 2, fillColor: 'red', fillOpacity: 1}).addTo(camada);
         });
     }
 
