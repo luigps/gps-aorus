@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - COMANDO DE LAGOS</title>
+    <title>GPS AORUS - SÍMBOLOS DE LAGOS</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,22 +20,24 @@ gps_aorus.html
 
         #painel { 
             position: absolute; bottom: 15px; left: 10px; 
-            background: rgba(0,25,0,0.95); padding: 12px; 
+            background: rgba(0,25,0,0.95); padding: 10px; 
             border: 3px solid #00FF00; z-index: 1000; 
-            width: 275px; border-radius: 10px; color: #00FF00;
+            width: 280px; border-radius: 10px; color: #00FF00;
             font-family: 'Courier New', monospace;
         }
-        #dados { font-size: 15px; font-weight: bold; line-height: 1.6; margin-bottom: 6px; }
+        #dados { font-size: 14px; font-weight: bold; line-height: 1.5; margin-bottom: 5px; }
         #btnLigar { background: #005500; color: white; width: 100%; padding: 10px; margin-bottom: 8px; border: 2px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .btn-vermelho { background: #c00 !important; color: white !important; grid-column: span 2; }
-        
-        .btn-azul { background: #003366 !important; color: #00FFFF !important; border: 1px solid #00FFFF !important; grid-column: span 2; margin-top: 5px; }
-        .btn-limpar { background: #444 !important; color: #ff9900 !important; border: 1px solid #ff9900 !important; grid-column: span 2; margin-top: 5px; }
+        /* GRELHA DE BOTÕES DE SÍMBOLOS */
+        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 12px 5px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 18px; text-align: center; }
+        .btn-largo { grid-column: span 3; font-size: 14px; background: #c00 !important; color: white !important; }
+        .btn-ferramenta { grid-column: span 3; font-size: 11px; margin-top: 5px; background: #333; }
 
         .seta-barco { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; }
+        
+        /* ESTILO DOS ÍCONES NO MAPA */
+        .icon-txt { font-size: 20px; text-shadow: 2px 2px 2px black; text-align: center; }
     </style>
 </head>
 <body>
@@ -48,19 +50,18 @@ gps_aorus.html
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
     <div id="dados">
-        LAT: <span id="txtLat">37°00.0000</span><br>
-        LON: <span id="txtLon">008°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow;">0.0</span> kn
+        LAT: <span id="txtLat">37°00.0000</span> | LON: <span id="txtLon">008°00.0000</span><br>
+        VELOCIDADE: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (OBJETO)</button>
-        <button class="btn-m" onclick="marcar(1)">P1</button>
-        <button class="btn-m" onclick="marcar(2)">P2</button>
-        <button class="btn-m" onclick="marcar(3)">P3</button>
-        <button class="btn-m" onclick="marcar(4)">P4</button>
+        <button class="btn-m btn-largo" onclick="marcar('🔴')">MARCA🔴 (BARCO)</button>
         
-        <button class="btn-m btn-azul" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR MARCAS DO CARTÃO</button>
-        <button class="btn-m btn-limpar" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR ECRÃ</button>
+        <button class="btn-m" onclick="marcar('⚓')">⚓</button>
+        <button class="btn-m" onclick="marcar('🟡')">🟡</button>
+        <button class="btn-m" onclick="marcar('⚫')">⚫</button>
+        
+        <button class="btn-m btn-ferramenta" style="background:#003366 !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR GPX</button>
+        <button class="btn-m btn-ferramenta" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR ECRÃ</button>
     </div>
 </div>
 
@@ -73,6 +74,29 @@ gps_aorus.html
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
+    function desenhar() {
+        camada.clearLayers();
+        Object.keys(pontos).forEach(id => {
+            let p = pontos[id];
+            // Cria o ícone com o desenho escolhido (Âncora, Bola Amarela, etc)
+            let iconAorus = L.divIcon({
+                html: `<div class="icon-txt">${p.simbolo}</div>`,
+                className: 'custom-icon',
+                iconSize: [25, 25],
+                iconAnchor: [12, 12]
+            });
+            L.marker([p.lat, p.lon], {icon: iconAorus}).addTo(camada);
+        });
+    }
+
+    function marcar(simbolo) {
+        if (!latA) return;
+        let id = "PT_" + Date.now();
+        pontos[id] = { lat: latA, lon: lonA, simbolo: simbolo };
+        localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+        desenhar();
+    }
+
     function lerGPX(input) {
         const reader = new FileReader();
         reader.onload = function() {
@@ -82,54 +106,33 @@ gps_aorus.html
             for (let i = 0; i < wpts.length; i++) {
                 let lt = parseFloat(wpts[i].getAttribute("lat"));
                 let ln = parseFloat(wpts[i].getAttribute("lon"));
-                let id = "GPX_" + Date.now() + "_" + i;
-                pontos[id] = { lat: lt, lon: ln, tipo: 'historico' };
+                // Importa tudo como Bola Preta por segurança, ou o que o senhor definir
+                pontos["IMP_"+Date.now()+"_"+i] = { lat: lt, lon: ln, simbolo: '⚫' };
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
-            alert(wpts.length + " marcas carregadas no mapa!");
+            alert(wpts.length + " marcas importadas como Bola Preta!");
         };
         reader.readAsText(input.files[0]);
     }
 
-    // EXPORTA O FICHEIRO E LIMPA O MAPA LOGO A SEGUIR
     function exportarELimpar() {
-        if (Object.keys(pontos).length === 0) { alert("Não há marcas para exportar."); return; }
-        
-        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS_AORUS">';
+        if (Object.keys(pontos).length === 0) return;
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1">';
         Object.keys(pontos).forEach(id => {
-            gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${id}</name></wpt>`;
+            gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${pontos[id].simbolo}</name></wpt>`;
         });
         gpx += '\n</gpx>';
-        
         const blob = new Blob([gpx], { type: 'text/xml' });
-        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'MARCAS_AORUS.gpx';
-        a.click();
-        
-        // LIMPEZA TOTAL
-        pontos = {};
-        localStorage.removeItem('ptsAorus');
-        desenhar();
-        alert("Ficheiro guardado. O ecrã foi limpo com sucesso!");
-    }
-
-    function desenhar() {
-        camada.clearLayers();
-        Object.keys(pontos).forEach(id => {
-            let cor = pontos[id].tipo === 'historico' ? '#00FFFF' : 'red';
-            L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 7, color: 'white', weight: 1.5, fillColor: cor, fillOpacity: 1}).addTo(camada);
-        });
+        a.href = URL.createObjectURL(blob); a.download = 'MARCAS_AORUS.gpx'; a.click();
+        pontos = {}; localStorage.removeItem('ptsAorus'); desenhar();
     }
 
     function alternarVista() {
         modo3D = !modo3D;
         document.getElementById('map').classList.toggle('vista-3d', modo3D);
-        const b = document.getElementById('btnVista');
-        b.textContent = modo3D ? "VISTA: MAR 3D" : "VISTA: CARTA 2D";
-        b.style.background = modo3D ? "#00FF00" : "#111";
-        b.style.color = modo3D ? "black" : "#00FF00";
+        document.getElementById('btnVista').textContent = modo3D ? "VISTA: MAR 3D" : "VISTA: CARTA 2D";
     }
 
     function formatar(v, isLat) {
@@ -150,13 +153,6 @@ gps_aorus.html
                 mapa.setView([latA, lonA], 16);
             } else { barco.setLatLng([latA, lonA]); }
         }, null, { enableHighAccuracy: true });
-        desenhar();
-    }
-
-    function marcar(id) {
-        if (!latA) return;
-        pontos[id] = { lat: latA, lon: lonA, tipo: 'barco' };
-        localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
     }
 
