@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - OPEN SOURCE SAT</title>
+    <title>GPS AORUS - COMANDO LATERAL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -10,47 +10,70 @@ gps_aorus.html
 
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
-        #map { width: 100vw; height: 100vh; z-index: 1; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; display: flex; }
         
-        /* QUADRADO VERDE - O SEU COMANDO */
+        /* BARRA LATERAL ESQUERDA */
+        #barra-lateral { 
+            width: 140px; height: 100vh; background: #001000; 
+            border-right: 2px solid #00FF00; z-index: 2000; 
+            overflow-y: auto; padding: 10px 5px;
+        }
+        .btn-ponto { 
+            width: 100%; background: #003300; color: #00FF00; 
+            border: 1px solid #00FF00; padding: 12px 5px; margin-bottom: 8px;
+            font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .btn-ponto:active { background: #00FF00; color: black; }
+
+        /* CONTENTOR DO MAPA */
+        #map { flex-grow: 1; height: 100vh; z-index: 1; }
+        
+        /* QUADRADO VERDE EM BAIXO */
         #painel { 
-            position: absolute; bottom: 25px; left: 15px; 
-            background: rgba(0,25,0,0.9); padding: 15px; 
+            position: absolute; bottom: 20px; right: 20px; 
+            background: rgba(0,25,0,0.9); padding: 12px; 
             border: 3px solid #00FF00; z-index: 1000; 
-            width: 240px; border-radius: 10px; color: #00FF00;
+            width: 220px; border-radius: 10px; color: #00FF00;
             font-family: 'Courier New', monospace; box-shadow: 0 0 15px black;
         }
         
-        #dados { font-size: 16px; font-weight: bold; line-height: 1.8; }
-        .vel-destaque { color: yellow; font-size: 22px; }
-        
+        #dados { font-size: 15px; font-weight: bold; line-height: 1.6; }
         #btnLigar { 
-            background: #006600; color: white; width: 100%; padding: 15px; 
-            margin-bottom: 10px; border: 2px solid #00FF00; border-radius: 8px;
-            font-weight: bold; font-size: 16px; cursor: pointer;
+            background: #006600; color: white; width: 100%; padding: 12px; 
+            margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 6px;
+            font-weight: bold; cursor: pointer;
         }
 
-        /* BARCO AMARELO CUSTOMIZADO */
         .icon-barco {
             width: 0; height: 0; 
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-bottom: 25px solid yellow;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 22px solid yellow;
             filter: drop-shadow(0 0 5px black);
         }
     </style>
 </head>
 <body>
 
+<div id="barra-lateral">
+    <button class="btn-ponto" onclick="irPara(37.0016, -8.9318, 'SAGRES')">SAGRES</button>
+    <button class="btn-ponto" onclick="irPara(37.0722, -8.7754, 'BURGAU')">BURGAU</button>
+    <button class="btn-ponto" onclick="irPara(37.0860, -8.7281, 'LUZ')">LUZ</button>
+    <button class="btn-ponto" onclick="irPara(37.0993, -8.6593, 'LAGOS')">LAGOS</button>
+    <button class="btn-ponto" onclick="irPara(37.1195, -8.6189, 'ALVOR')">ALVOR</button>
+    <button class="btn-ponto" onclick="irPara(37.1086, -8.5281, 'PORTIMÃO')">PORTIMÃO</button>
+    <button class="btn-ponto" onclick="irPara(37.1651, -7.4080, 'VRSA')">VRSA</button>
+</div>
+
 <div id="map"></div>
 
 <div id="painel">
-    <button id="btnLigar" onclick="ativarNavegacao()">LIGAR RADAR AORUS</button>
+    <button id="btnLigar" onclick="ativarNavegacao()">LIGAR RADAR</button>
     <div id="dados">
         LAT: <span id="txtLat">00°00.0000</span><br>
         LON: <span id="txtLon">000°00.0000</span><br>
-        VEL: <span id="vel" class="vel-destaque">0.0</span> kn<br>
+        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn<br>
         RUMO: <span id="rumo" style="color:cyan;">000</span>°
     </div>
 </div>
@@ -58,15 +81,14 @@ gps_aorus.html
 <script>
     let mapa, marcadorBarco;
     
-    // CONFIGURAÇÃO DO MAPA (CENTRO EM LAGOS)
+    // INICIAR MAPA REAL (SATÉLITE)
     mapa = L.map('map', {
         center: [37.1000, -8.6700],
-        zoom: 13,
-        zoomControl: false, // Tirar os botões para não estorvar
+        zoom: 12,
+        zoomControl: false,
         attributionControl: false
     });
 
-    // CAMADA DE SATÉLITE (ESRI OPEN SOURCE)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19
     }).addTo(mapa);
@@ -80,10 +102,15 @@ gps_aorus.html
         return `${p}${g}°${m}`;
     }
 
+    // FUNÇÃO DA BARRA LATERAL
+    function irPara(lat, lon, nome) {
+        mapa.flyTo([lat, lon], 15);
+        document.getElementById('txtLat').textContent = formatar(lat, true);
+        document.getElementById('txtLon').textContent = formatar(lon, false);
+    }
+
     async function ativarNavegacao() {
         document.getElementById('btnLigar').style.display = 'none';
-        
-        // Bloquear desligamento do ecrã
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
 
         navigator.geolocation.watchPosition(pos => {
@@ -92,38 +119,30 @@ gps_aorus.html
             const vel = (pos.coords.speed * 1.94384 || 0).toFixed(1);
             const rumo = Math.round(pos.coords.heading || 0);
 
-            // ATUALIZAR QUADRADO VERDE
             document.getElementById('txtLat').textContent = formatar(lat, true);
             document.getElementById('txtLon').textContent = formatar(lon, false);
             document.getElementById('vel').textContent = vel;
             document.getElementById('rumo').textContent = rumo.toString().padStart(3, '0');
 
-            // POSICIONAR O BARCO NO MAPA REAL
-            const novaPos = [lat, lon];
-            
             if (!marcadorBarco) {
-                const barcoIcon = L.divIcon({ className: 'icon-barco', iconSize: [24, 25], iconAnchor: [12, 12] });
-                marcadorBarco = L.marker(novaPos, { icon: barcoIcon }).addTo(mapa);
-                mapa.setView(novaPos, 16);
+                const barcoIcon = L.divIcon({ className: 'icon-barco', iconSize: [20, 22], iconAnchor: [10, 11] });
+                marcadorBarco = L.marker([lat, lon], { icon: barcoIcon }).addTo(mapa);
+                mapa.setView([lat, lon], 16);
             } else {
-                marcadorBarco.setLatLng(novaPos);
+                marcadorBarco.setLatLng([lat, lon]);
             }
 
-            // RODAR O BARCO SE HOUVER RUMO
             if (rumo) {
                 document.querySelector('.icon-barco').style.transform = `rotate(${rumo}deg)`;
             }
-
-        }, (err) => { alert("Erro de sinal: " + err.message); }, 
-        { enableHighAccuracy: true, maximumAge: 0 });
+        }, null, { enableHighAccuracy: true });
     }
 
-    // MOSTRA COORDENADA DE ONDE TOCA (NO QUADRADO)
+    // TOQUE NO MAPA ATUALIZA O QUADRADO
     mapa.on('click', function(e) {
         document.getElementById('txtLat').textContent = formatar(e.latlng.lat, true);
         document.getElementById('txtLon').textContent = formatar(e.latlng.lng, false);
     });
-
 </script>
 </body>
 </html>
