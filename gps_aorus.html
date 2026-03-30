@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - SÍMBOLOS DE LAGOS</title>
+    <title>GPS AORUS - RIGOR TOTAL</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,24 +20,20 @@ gps_aorus.html
 
         #painel { 
             position: absolute; bottom: 15px; left: 10px; 
-            background: rgba(0,25,0,0.95); padding: 10px; 
+            background: rgba(0,20,0,0.95); padding: 12px; 
             border: 3px solid #00FF00; z-index: 1000; 
             width: 280px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 30px black;
         }
-        #dados { font-size: 14px; font-weight: bold; line-height: 1.5; margin-bottom: 5px; }
-        #btnLigar { background: #005500; color: white; width: 100%; padding: 10px; margin-bottom: 8px; border: 2px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        #dados { font-size: 14px; font-weight: bold; line-height: 1.6; margin-bottom: 5px; }
+        #btnLigar { background: #004400; color: white; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        /* GRELHA DE BOTÕES DE SÍMBOLOS */
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
-        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 12px 5px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 18px; text-align: center; }
-        .btn-largo { grid-column: span 3; font-size: 14px; background: #c00 !important; color: white !important; }
-        .btn-ferramenta { grid-column: span 3; font-size: 11px; margin-top: 5px; background: #333; }
+        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 15px 5px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .btn-vermelho { background: #900 !important; color: white !important; grid-column: span 2; }
+        .btn-f { grid-column: span 2; font-size: 11px; background: #333; height: 35px; margin-top: 5px; }
 
         .seta-barco { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; }
-        
-        /* ESTILO DOS ÍCONES NO MAPA */
-        .icon-txt { font-size: 20px; text-shadow: 2px 2px 2px black; text-align: center; }
     </style>
 </head>
 <body>
@@ -50,18 +46,18 @@ gps_aorus.html
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
     <div id="dados">
-        LAT: <span id="txtLat">37°00.0000</span> | LON: <span id="txtLon">008°00.0000</span><br>
-        VELOCIDADE: <span id="vel" style="color:yellow;">0.0</span> kn
+        LAT: <span id="txtLat">37°00.0000</span><br>
+        LON: <span id="txtLon">008°00.0000</span><br>
+        VEL: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-largo" onclick="marcar('🔴')">MARCA🔴 (BARCO)</button>
+        <button class="btn-m btn-vermelho" onclick="marcar('barco')">MARCA BARCO 🔴</button>
+        <button class="btn-m" onclick="marcar('ancora')"><svg width="20" height="20" viewBox="0 0 24 24" fill="red"><path d="M12 2c.55 0 1 .45 1 1v1.1c1.72.45 3 2.01 3 3.9h-2c0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-1.89 1.28-3.45 3-3.9V3c0-.55.45-1 1-1zm8 11h-2c0 2.21-1.79 4-4 4s-4-1.79-4-4h-2c0 3.31 2.69 6 6 6s6-2.69 6-6zM12 11c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>ÂNCORA</button>
+        <button class="btn-m" onclick="marcar('amarela')"><div style="width:15px; height:15px; background:yellow; border-radius:50%; border:1px solid white;"></div>AMARELA</button>
+        <button class="btn-m" style="grid-column: span 2;" onclick="marcar('vermelha')"><div style="width:15px; height:15px; background:red; border-radius:50%; border:1px solid white;"></div>VERMELHA</button>
         
-        <button class="btn-m" onclick="marcar('⚓')">⚓</button>
-        <button class="btn-m" onclick="marcar('🟡')">🟡</button>
-        <button class="btn-m" onclick="marcar('⚫')">⚫</button>
-        
-        <button class="btn-m btn-ferramenta" style="background:#003366 !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR GPX</button>
-        <button class="btn-m btn-ferramenta" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR ECRÃ</button>
+        <button class="btn-m btn-f" style="background:#003366 !important; color:#00FFFF !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR CARTÃO</button>
+        <button class="btn-m btn-f" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR</button>
     </div>
 </div>
 
@@ -74,25 +70,29 @@ gps_aorus.html
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
+    // FUNÇÃO QUE DESENHA OS ÍCONES SEM USAR EMOJIS (BLINDAGEM)
+    function obterIcone(tipo) {
+        let html = '';
+        if (tipo === 'ancora') {
+            html = '<svg width="25" height="25" viewBox="0 0 24 24" fill="red" style="filter:drop-shadow(2px 2px 2px black);"><path d="M12 2c.55 0 1 .45 1 1v1.1c1.72.45 3 2.01 3 3.9h-2c0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-1.89 1.28-3.45 3-3.9V3c0-.55.45-1 1-1zm8 11h-2c0 2.21-1.79 4-4 4s-4-1.79-4-4h-2c0 3.31 2.69 6 6 6s6-2.69 6-6z"/></svg>';
+        } else if (tipo === 'amarela') {
+            html = '<div style="width:16px; height:16px; background:yellow; border:2px solid white; border-radius:50%; box-shadow: 2px 2px 5px black;"></div>';
+        } else if (tipo === 'vermelha' || tipo === 'barco') {
+            html = '<div style="width:16px; height:16px; background:red; border:2px solid white; border-radius:50%; box-shadow: 2px 2px 5px black;"></div>';
+        }
+        return L.divIcon({ html: html, className: 'custom-m', iconSize: [20, 20], iconAnchor: [10, 10] });
+    }
+
     function desenhar() {
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
-            let p = pontos[id];
-            // Cria o ícone com o desenho escolhido (Âncora, Bola Amarela, etc)
-            let iconAorus = L.divIcon({
-                html: `<div class="icon-txt">${p.simbolo}</div>`,
-                className: 'custom-icon',
-                iconSize: [25, 25],
-                iconAnchor: [12, 12]
-            });
-            L.marker([p.lat, p.lon], {icon: iconAorus}).addTo(camada);
+            L.marker([pontos[id].lat, pontos[id].lon], { icon: obterIcone(pontos[id].tipo) }).addTo(camada);
         });
     }
 
-    function marcar(simbolo) {
+    function marcar(tipo) {
         if (!latA) return;
-        let id = "PT_" + Date.now();
-        pontos[id] = { lat: latA, lon: lonA, simbolo: simbolo };
+        pontos["PT_"+Date.now()] = { lat: latA, lon: lonA, tipo: tipo };
         localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
     }
@@ -106,26 +106,24 @@ gps_aorus.html
             for (let i = 0; i < wpts.length; i++) {
                 let lt = parseFloat(wpts[i].getAttribute("lat"));
                 let ln = parseFloat(wpts[i].getAttribute("lon"));
-                // Importa tudo como Bola Preta por segurança, ou o que o senhor definir
-                pontos["IMP_"+Date.now()+"_"+i] = { lat: lt, lon: ln, simbolo: '⚫' };
+                pontos["IMP_"+Date.now()+"_"+i] = { lat: lt, lon: ln, tipo: 'vermelha' };
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
-            alert(wpts.length + " marcas importadas como Bola Preta!");
+            alert(wpts.length + " marcas importadas!");
         };
         reader.readAsText(input.files[0]);
     }
 
     function exportarELimpar() {
-        if (Object.keys(pontos).length === 0) return;
-        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1">';
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS_Aorus">';
         Object.keys(pontos).forEach(id => {
-            gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${pontos[id].simbolo}</name></wpt>`;
+            gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${pontos[id].tipo}</name></wpt>`;
         });
         gpx += '\n</gpx>';
         const blob = new Blob([gpx], { type: 'text/xml' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'MARCAS_AORUS.gpx'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'MARCAS_AORUS.gpx'; a.click();
         pontos = {}; localStorage.removeItem('ptsAorus'); desenhar();
     }
 
