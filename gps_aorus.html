@@ -32,7 +32,6 @@ gps_aorus.html
         .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-vermelho { background: #c00 !important; color: white !important; grid-column: span 2; }
         
-        /* BOTÕES DE GESTÃO */
         .btn-acao { background: #333; color: white; border: 1px solid #ccc; font-size: 10px; padding: 8px; }
         .btn-azul { background: #003366 !important; color: #00FFFF !important; border: 1px solid #00FFFF !important; }
 
@@ -60,7 +59,7 @@ gps_aorus.html
         
         <button id="btnVisivel" class="btn-m btn-acao" onclick="toggleVisibilidade()">👁️ ESCONDER PONTOS</button>
         <button class="btn-m btn-azul" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR GPX</button>
-        <button class="btn-m btn-acao" onclick="exportarGPX()">📤 EXPORTAR GPX</button>
+        <button class="btn-m btn-acao" onclick="exportarGPX()">📤 EXPORTAR PARA PASTAS</button>
     </div>
 </div>
 
@@ -88,33 +87,45 @@ gps_aorus.html
             for (let i = 0; i < wpts.length; i++) {
                 let lt = parseFloat(wpts[i].getAttribute("lat"));
                 let ln = parseFloat(wpts[i].getAttribute("lon"));
-                let id = "HIST_" + Date.now() + "_" + i; // ID para pontos históricos
+                let id = "HIST_" + Date.now() + "_" + i;
                 pontos[id] = { lat: lt, lon: ln, tipo: 'historico' };
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
-            alert(wpts.length + " pontos de pesca carregados em azul!");
+            alert(wpts.length + " pontos carregados!");
         };
         reader.readAsText(input.files[0]);
     }
 
+    // FUNÇÃO DE EXPORTAR RETIFICADA PARA NÃO ABRIR EM OUTRAS APPS
     function exportarGPX() {
-        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1">';
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS Aorus">';
         Object.keys(pontos).forEach(id => {
-            gpx += `<wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${id}</name></wpt>`;
+            gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}">\n    <name>${id}</name>\n  </wpt>`;
         });
-        gpx += '</gpx>';
-        const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+        gpx += '\n</gpx>';
+        
+        const blob = new Blob([gpx], { type: 'application/octet-stream' }); // Força o download
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'marcas_aorus.gpx'; a.click();
+        const a = document.body.appendChild(document.createElement('a'));
+        
+        a.href = url;
+        a.download = 'MARCAS_AORUS.gpx'; // Força este nome de ficheiro
+        a.click();
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            a.remove();
+        }, 500);
+        
+        alert("Ficheiro MARCAS_AORUS.gpx enviado para a sua pasta de Downloads.");
     }
 
     function desenhar() {
         camada.clearLayers();
         if (!mostrarPontos) return;
         Object.keys(pontos).forEach(id => {
-            let cor = pontos[id].tipo === 'historico' ? '#00FFFF' : 'red'; // Azul para GPX, Vermelho para o Barco
+            let cor = pontos[id].tipo === 'historico' ? '#00FFFF' : 'red';
             L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 7, color: 'white', weight: 1.5, fillColor: cor, fillOpacity: 1}).addTo(camada);
         });
     }
