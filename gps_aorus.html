@@ -35,8 +35,8 @@ gps_aorus.html
 
         .seta-barco { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; }
         
-        /* DESENHO LIMPO DO ÍCONE */
-        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 3px black; text-align: center; display: flex; align-items: center; justify-content: center; }
+        /* ÍCONE PURO SEM TEXTO */
+        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 3px black; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -54,13 +54,13 @@ gps_aorus.html
         VEL: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar('🔴', 'red')">MARCAR BARCO 🔴</button>
+        <button class="btn-m btn-vermelho" onclick="marcar('🔴', 'red')">MARCAR POSIÇÃO 🔴</button>
         
         <button class="btn-m" onclick="marcar('⚓', 'red')">⚓<br>ÂNCORA</button>
         <button class="btn-m" onclick="marcar('🟡', 'yellow')">🟡<br>AMARELA</button>
         <button class="btn-m" onclick="marcar('⚫', 'white')">⚫<br>PRETA</button>
         
-        <button class="btn-m btn-f" style="background:#003366 !important; color:#00FFFF !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR CARTÃO</button>
+        <button class="btn-m btn-f" style="background:#003366 !important; color:#00FFFF !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR GPX</button>
         <button class="btn-m btn-f" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR</button>
     </div>
 </div>
@@ -70,7 +70,7 @@ gps_aorus.html
     let latA, lonA, modo3D = false;
     let pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {};
 
-    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 14, zoomControl: false, attributionControl: false });
+    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 15, zoomControl: false, attributionControl: false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
@@ -78,8 +78,9 @@ gps_aorus.html
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
             let p = pontos[id];
+            // Rigor: Apenas o símbolo, sem qualquer etiqueta de texto
             let iconAorus = L.divIcon({
-                html: `<div class="icon-aorus" style="color:${p.cor}">${p.simbolo}</div>`,
+                html: `<div class="icon-aorus" style="color:${p.cor || 'white'}">${p.simbolo}</div>`,
                 className: 'custom-div-icon',
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
@@ -90,7 +91,8 @@ gps_aorus.html
 
     function marcar(simbolo, cor) {
         if (!latA) return;
-        pontos["PT_"+Date.now()] = { lat: latA, lon: lonA, simbolo: simbolo, cor: cor };
+        let id = "PT_" + Date.now();
+        pontos[id] = { lat: latA, lon: lonA, simbolo: simbolo, cor: cor };
         localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
     }
@@ -109,7 +111,7 @@ gps_aorus.html
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
-            alert(wpts.length + " marcas carregadas.");
+            alert(wpts.length + " marcas importadas.");
         };
         reader.readAsText(input.files[0]);
     }
@@ -161,5 +163,6 @@ gps_aorus.html
 </script>
 </body>
 </html>
+
 
 
