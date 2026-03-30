@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - CONTROLO DE VISTA</title>
+    <title>GPS AORUS - NAVEGAÇÃO TIMEZERO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -10,23 +10,29 @@ gps_aorus.html
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
-        #map { width: 100vw; height: 100vh; z-index: 1; transition: all 0.5s; }
         
-        /* BOTÃO DE VISTA (PLANA/3D) */
+        /* CONTENTOR DO MAPA COM TRANSIÇÃO SUAVE */
+        #map-container { width: 100vw; height: 100vh; perspective: 1000px; background: #000; }
+        #map { width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* EFEITO TIMEZERO (VISTA AO NÍVEL DO MAR) */
+        .vista-timezero { transform: rotateX(55deg) translateY(-10%); }
+
+        /* BOTÃO DE VISTA NO CANTO SUPERIOR */
         #btnVista { 
             position: absolute; top: 15px; right: 15px; z-index: 2000;
-            background: #222; color: white; border: 2px solid #00FF00;
-            padding: 15px; font-weight: bold; border-radius: 50%;
-            width: 60px; height: 60px; cursor: pointer; font-size: 14px;
+            background: #111; color: #00FF00; border: 2px solid #00FF00;
+            padding: 12px; font-weight: bold; border-radius: 8px;
+            cursor: pointer; font-size: 14px; text-transform: uppercase;
         }
 
         /* PAINEL GPS AORUS */
         #painel { 
             position: absolute; bottom: 20px; left: 10px; 
-            background: rgba(0,20,0,0.95); padding: 15px; 
+            background: rgba(0,25,0,0.95); padding: 15px; 
             border: 3px solid #00FF00; z-index: 1000; 
             width: 250px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 20px black;
         }
         #dados { font-size: 16px; font-weight: bold; line-height: 1.8; margin-bottom: 10px; }
         #btnLigar { background: #004400; color: white; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 5px; font-weight: bold; cursor: pointer; }
@@ -35,32 +41,32 @@ gps_aorus.html
         .btn-marca { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn-vermelho { background: #900 !important; color: white !important; grid-column: span 2; }
 
-        /* ESTILO PARA A INCLINAÇÃO (EFEITO 3D) */
-        .mapa-3d { transform: perspective(600px) rotateX(30deg); }
-
         .seta-barco {
             width: 0; height: 0; 
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
-            border-bottom: 22px solid yellow;
+            border-bottom: 25px solid yellow;
+            filter: drop-shadow(0 0 5px black);
         }
     </style>
 </head>
 <body>
 
-<button id="btnVista" onclick="alternarVista()">2D</button>
+<button id="btnVista" onclick="alternarVista()">VISTA: CARTA 2D</button>
 
-<div id="map"></div>
+<div id="map-container">
+    <div id="map"></div>
+</div>
 
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
     <div id="dados">
         LAT: <span id="txtLat">37°00.0000</span><br>
         LON: <span id="txtLon">008°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow;">0.0</span> kn
+        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn
     </div>
     <div class="grid-botoes">
-        <button class="btn-marca btn-vermelho" onclick="gravarPonto(0)">MARCA🔴 (RECIFE)</button>
+        <button class="btn-marca btn-vermelho" onclick="gravarPonto(0)">MARCA🔴 (OBJETO)</button>
         <button class="btn-marca" onclick="gravarPonto(1)">P1</button>
         <button class="btn-marca" onclick="gravarPonto(2)">P2</button>
     </div>
@@ -69,28 +75,29 @@ gps_aorus.html
 <script>
     let mapa, barco, camadaMarcas;
     let latAtual, lonAtual;
-    let vista3D = false;
+    let modo3D = false;
     let memoriaMarcas = JSON.parse(localStorage.getItem('marcasAorus')) || {};
 
+    // INICIAR GPS COM MAPA DE SATÉLITE
     mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 15, zoomControl: false, attributionControl: false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camadaMarcas = L.layerGroup().addTo(mapa);
 
     function alternarVista() {
-        vista3D = !vista3D;
+        modo3D = !modo3D;
         const btn = document.getElementById('btnVista');
         const mapDiv = document.getElementById('map');
         
-        if (vista3D) {
-            mapDiv.classList.add('mapa-3d');
-            btn.textContent = "3D";
+        if (modo3D) {
+            mapDiv.classList.add('vista-timezero');
+            btn.textContent = "VISTA: MAR 3D";
             btn.style.background = "#00FF00";
             btn.style.color = "black";
         } else {
-            mapDiv.classList.remove('mapa-3d');
-            btn.textContent = "2D";
-            btn.style.background = "#222";
-            btn.style.color = "white";
+            mapDiv.classList.remove('vista-timezero');
+            btn.textContent = "VISTA: CARTA 2D";
+            btn.style.background = "#111";
+            btn.style.color = "#00FF00";
         }
     }
 
@@ -109,20 +116,23 @@ gps_aorus.html
             lonAtual = pos.coords.longitude;
             document.getElementById('txtLat').textContent = formatar(latAtual, true);
             document.getElementById('txtLon').textContent = formatar(lonAtual, false);
-            document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
+            document.getElementById('vel').textContent = (pos.coords.speed * 1.943 || 0).toFixed(1);
 
             if (!barco) {
-                barco = L.marker([latAtual, lonAtual], { icon: L.divIcon({className:'seta-barco'}) }).addTo(mapa);
+                barco = L.marker([latAtual, lonAtual], { icon: L.divIcon({className:'seta-barco', iconSize:[20,25], iconAnchor:[10,12]}) }).addTo(mapa);
                 mapa.setView([latAtual, lonAtual], 17);
             } else {
                 barco.setLatLng([latAtual, lonAtual]);
             }
+            
+            let rumo = pos.coords.heading;
+            if (rumo) document.querySelector('.seta-barco').style.transform = `rotate(${rumo}deg)`;
         }, null, { enableHighAccuracy: true });
         desenharMarcas();
     }
 
     function gravarPonto(id) {
-        if (!latAtual) return;
+        if (!latAtual) return alert("Aguarde o GPS...");
         memoriaMarcas[id] = { lat: latAtual, lon: lonAtual };
         localStorage.setItem('marcasAorus', JSON.stringify(memoriaMarcas));
         desenharMarcas();
