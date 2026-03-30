@@ -2,9 +2,8 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - WAYPOINTS RIGOR</title>
+    <title>GPS AORUS - MARCADOR DE RECIFES</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -13,199 +12,129 @@ gps_aorus.html
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         #map { width: 100vw; height: 100vh; z-index: 1; }
         
-        /* LISTA DE WAYPOINTS - SUPERIOR ESQUERDA */
-        #lista-waypoints { 
-            position: absolute; top: 10px; left: 10px; 
-            z-index: 2000; width: 150px; 
-            background: rgba(0, 15, 0, 0.85); 
-            border: 2px solid #00FF00; border-radius: 5px;
-            max-height: 50vh; overflow-y: auto; padding: 5px;
-        }
-        .way-title { color: #00FF00; font-weight: bold; font-size: 11px; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #00FF00; }
-        .btn-way { 
-            width: 100%; background: #002200; color: #00FF00; 
-            border: 1px solid #008800; padding: 8px 4px; margin-bottom: 4px;
-            font-size: 12px; font-weight: bold; cursor: pointer; border-radius: 3px;
-            text-align: left;
-        }
-        .btn-way:active { background: #00FF00; color: black; }
-
-        /* QUADRADO VERDE - DADOS GPS + BOTOES DE MARCA */
+        /* QUADRADO VERDE - COMANDO DE MARCAS */
         #painel { 
             position: absolute; bottom: 20px; left: 10px; 
-            background: rgba(0,25,0,0.9); padding: 12px; 
+            background: rgba(0,25,0,0.95); padding: 15px; 
             border: 3px solid #00FF00; z-index: 1000; 
-            width: 240px; border-radius: 8px; color: #00FF00;
-            font-family: 'Courier New', monospace; box-shadow: 0 0 15px black;
+            width: 250px; border-radius: 10px; color: #00FF00;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 20px black;
         }
-        #dados { font-size: 15px; font-weight: bold; line-height: 1.6; margin-bottom: 10px; }
+        #dados { font-size: 16px; font-weight: bold; line-height: 1.8; margin-bottom: 12px; }
         #btnLigar { 
             background: #006600; color: white; width: 100%; padding: 15px; 
-            margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 5px;
+            margin-bottom: 10px; border: 2px solid #00FF00; border-radius: 8px;
             font-weight: bold; font-size: 16px; cursor: pointer;
         }
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .grid-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-marca { 
-            background: #222; color: #00FF00; border: 1px solid #00FF00; 
-            padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;
-            font-family: Arial;
+            background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; 
+            padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;
         }
-        .btn-marca:active { background: #00FF00; color: black; }
-        #btnApagar { position: absolute; top: 12px; right: 12px; background: transparent; border: none; font-size: 20px; color: white; cursor: pointer; }
+        .btn-vermelho { background: #900 !important; color: white !important; grid-column: span 2; }
+        #btnLixo { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 20px; color: white; cursor: pointer; }
 
-        .icon-barco {
+        /* ÍCONE DO BARCO */
+        .seta-barco {
             width: 0; height: 0; 
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 22px solid yellow;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 26px solid yellow;
             filter: drop-shadow(0 0 5px black);
         }
     </style>
 </head>
 <body>
 
-<div id="lista-waypoints">
-    <div class="way-title">WAYPOINTS AORUS</div>
-    <button class="btn-way" onclick="irPara(36.9932, -8.9488)">SAGRES</button>
-    <button class="btn-way" onclick="irPara(37.0722, -8.7754)">BURGAU</button>
-    <button class="btn-way" onclick="irPara(37.0860, -8.7281)">LUZ</button>
-    <button class="btn-way" onclick="irPara(37.0993, -8.6660)">LAGOS (BARRA)</button>
-    <button class="btn-way" onclick="irPara(37.1195, -8.6189)">ALVOR (BARRA)</button>
-    <button class="btn-way" onclick="irPara(37.1086, -8.5281)">PORTIMÃO</button>
-    <button class="btn-way" onclick="irPara(37.1651, -7.4080)">VRSA (BARRA)</button>
-</div>
-
 <div id="map"></div>
 
 <div id="painel">
-    <button id="btnApagar" onclick="limparMarcas()">🗑️</button>
-    <button id="btnLigar" onclick="ativarNavegacao()">LIGAR GPS</button>
+    <button id="btnLixo" onclick="apagarTudo()">🗑️</button>
+    <button id="btnLigar" onclick="iniciarGPS()">LIGAR RADAR AORUS</button>
     <div id="dados">
-        LAT: <span id="txtLat">---</span><br>
-        LON: <span id="txtLon">---</span><br>
-        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn<br>
-        RUMO: <span id="rumo" style="color:cyan;">000</span>°
+        LAT: <span id="txtLat">---°--.----</span><br>
+        LON: <span id="txtLon">---°--.----</span><br>
+        VEL: <span id="vel" style="color:yellow; font-size:22px;">0.0</span> kn
     </div>
-    <div class="grid-marcas">
-        <button class="btn-marca" style="grid-column: span 2; background: red; color: white;" onclick="marcar(0)">MARCA 🔴</button>
-        <button class="btn-marca" onclick="marcar(1)">P1</button>
-        <button class="btn-marca" onclick="marcar(2)">P2</button>
-        <button class="btn-marca" onclick="marcar(3)">P3</button>
-        <button class="btn-marca" onclick="marcar(4)">P4</button>
+    <div class="grid-botoes">
+        <button class="btn-marca btn-vermelho" onclick="gravarPonto(0)">MARCA🔴 (OBJETO)</button>
+        <button class="btn-marca" onclick="gravarPonto(1)">P1</button>
+        <button class="btn-marca" onclick="gravarPonto(2)">P2</button>
+        <button class="btn-marca" onclick="gravarPonto(3)">P3</button>
+        <button class="btn-marca" onclick="gravarPonto(4)">P4</button>
     </div>
 </div>
 
 <script>
-    let mapa, marcadorBarco, camadaMarcas;
-    // Recuperar marcas guardadas
-    let marcas = JSON.parse(localStorage.getItem('marcasAorus')) || {};
-    
-    // INICIAR MAPA REAL (SATÉLITE ESRI)
-    mapa = L.map('map', {
-        center: [37.1000, -8.6700],
-        zoom: 13,
-        zoomControl: false,
-        attributionControl: false
-    });
+    let mapa, barco, camadaMarcas;
+    let latAtual, lonAtual;
+    let memoriaMarcas = JSON.parse(localStorage.getItem('marcasAorus')) || {};
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19
-    }).addTo(mapa);
-
+    // INICIAR MAPA SATÉLITE
+    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 14, zoomControl: false, attributionControl: false });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camadaMarcas = L.layerGroup().addTo(mapa);
 
-    // FORMATAR COORDENADA NO SEU RIGOR
-    function formatar(valor, isLat) {
-        let absV = Math.abs(valor);
-        let g = Math.floor(absV);
-        let m = ((absV - g) * 60).toFixed(4);
+    function formatar(v, isLat) {
+        let a = Math.abs(v);
+        let g = Math.floor(a);
+        let m = ((a - g) * 60).toFixed(4);
         let p = isLat ? "" : (g < 100 ? (g < 10 ? "00" : "0") : "");
         return `${p}${g}°${m}`;
     }
 
-    // SALTAR PARA O WAYPOINT
-    function irPara(lat, lon) {
-        mapa.flyTo([lat, lon], 16);
-        document.getElementById('txtLat').textContent = formatar(lat, true);
-        document.getElementById('txtLon').textContent = formatar(lon, false);
-    }
-
-    // VARIÁVEIS DO GPS PARA A MARCAÇÃO
-    let gpsLat, gpsLon;
-
-    async function ativarNavegacao() {
+    async function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
-        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-
         navigator.geolocation.watchPosition(pos => {
-            gpsLat = pos.coords.latitude;
-            gpsLon = pos.coords.longitude;
-            const vel = (pos.coords.speed * 1.94384 || 0).toFixed(1);
-            const rumo = Math.round(pos.coords.heading || 0);
+            latAtual = pos.coords.latitude;
+            lonAtual = pos.coords.longitude;
+            
+            document.getElementById('txtLat').textContent = formatar(latAtual, true);
+            document.getElementById('txtLon').textContent = formatar(lonAtual, false);
+            document.getElementById('vel').textContent = (pos.coords.speed * 1.94384 || 0).toFixed(1);
 
-            document.getElementById('txtLat').textContent = formatar(gpsLat, true);
-            document.getElementById('txtLon').textContent = formatar(gpsLon, false);
-            document.getElementById('vel').textContent = vel;
-            document.getElementById('rumo').textContent = rumo.toString().padStart(3, '0');
-
-            const novaPos = [gpsLat, gpsLon];
-            if (!marcadorBarco) {
-                const barcoIcon = L.divIcon({ className: 'icon-barco', iconSize: [20, 22], iconAnchor: [10, 11] });
-                marcadorBarco = L.marker(novaPos, { icon: barcoIcon }).addTo(mapa);
-                mapa.setView(novaPos, 17);
+            if (!barco) {
+                let iconBarco = L.divIcon({ className: 'seta-barco', iconSize: [24, 26], iconAnchor: [12, 13] });
+                barco = L.marker([latAtual, lonAtual], { icon: iconBarco }).addTo(mapa);
+                mapa.setView([latAtual, lonAtual], 17);
             } else {
-                marcadorBarco.setLatLng(novaPos);
+                barco.setLatLng([latAtual, lonAtual]);
             }
-
-            if (rumo) {
-                const el = document.querySelector('.icon-barco');
-                if(el) el.style.transform = `rotate(${rumo}deg)`;
-            }
+            
+            let rumo = pos.coords.heading;
+            if (rumo) document.querySelector('.seta-barco').style.transform = `rotate(${rumo}deg)`;
         }, null, { enableHighAccuracy: true });
-
+        
         desenharMarcas();
     }
 
-    // SISTEMA DE MARCAÇÃO DE PESQUEIROS
-    function marcar(id) {
-        if (!gpsLat || !gpsLon) { alert("Aguardar GPS..."); return; }
-        
-        // Guardar a marca na memória
-        marcas[id] = { lat: gpsLat, lon: gpsLon };
-        localStorage.setItem('marcasAorus', JSON.stringify(marcas));
+    function gravarPonto(id) {
+        if (!latAtual) return alert("Sem GPS!");
+        memoriaMarcas[id] = { lat: latAtual, lon: lonAtual };
+        localStorage.setItem('marcasAorus', JSON.stringify(memoriaMarcas));
         desenharMarcas();
     }
 
     function desenharMarcas() {
         camadaMarcas.clearLayers();
-        Object.keys(marcas).forEach(id => {
-            let dados = marcas[id];
-            // Criar ícone de Bola Vermelha
-            let iconMarca = L.divIcon({
-                className: 'bola-vermelha',
-                html: '<div style="width: 14px; height: 14px; background: red; border: 2px solid white; border-radius: 50%;"></div>',
-                iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-            
-            // Texto do ponto (P1, P2 ou Marca)
-            let textoPopup = id == 0 ? "MARCA 🔴" : `P${id}`;
-
-            L.marker([dados.lat, dados.lon], { icon: iconMarca })
-                .addTo(camadaMarcas)
-                .bindPopup(`<b>${textoPopup}</b><br>${formatar(dados.lat, true)}<br>${formatar(dados.lon, false)}`, { offset: [0, -7] });
+        Object.keys(memoriaMarcas).forEach(id => {
+            let pt = memoriaMarcas[id];
+            let label = id == 0 ? "OBJETO" : "P" + id;
+            L.circleMarker([pt.lat, pt.lon], {
+                radius: 8, color: 'white', weight: 2, fillColor: 'red', fillOpacity: 1
+            }).addTo(camadaMarcas).bindTooltip(label, { permanent: true, direction: 'top' });
         });
     }
 
-    function limparMarcas() {
-        if (confirm("Limpar todas as marcas de pesqueiro?")) {
-            marcas = {};
+    function apagarTudo() {
+        if (confirm("Apagar todos os recifes marcados?")) {
+            memoriaMarcas = {};
             localStorage.removeItem('marcasAorus');
             camadaMarcas.clearLayers();
         }
     }
 
-    // TOCAR NO MAPA ATUALIZA O PAINEL
-    mapa.on('click', function(e) {
+    mapa.on('click', e => {
         document.getElementById('txtLat').textContent = formatar(e.latlng.lat, true);
         document.getElementById('txtLon').textContent = formatar(e.latlng.lng, false);
     });
