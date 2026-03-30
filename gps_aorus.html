@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - NAVEGAÇÃO TOTAL</title>
+    <title>GPS AORUS - 180 PERCENTO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -14,42 +14,42 @@ gps_aorus.html
         /* CONTENTOR DE PROFUNDIDADE */
         #map-container { 
             width: 100vw; height: 100vh; 
-            perspective: 1000px; 
+            perspective: 1200px; 
             overflow: hidden;
             position: absolute; top: 0; left: 0; z-index: 1;
         }
         
-        /* MAPA COM SOBRA PARA COBRIR TUDO POR BAIXO DO PAINEL */
+        /* MAPA A 180% PARA NÃO DEIXAR PRETO NO TOPO */
         #map { 
             width: 180%; height: 180%; 
-            left: -40%; top: -30%;
+            left: -40%; top: -45%; /* Puxado para cima para cobrir o horizonte */
             position: absolute;
-            transition: transform 0.6s ease-out; 
+            transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1); 
         }
         
-        /* VISTA 3D - PASSA POR BAIXO DO QUADRADO VERDE */
+        /* VISTA 3D - AVANÇA PARA CIMA E PARA BAIXO DO PAINEL */
         .vista-3d { 
-            transform: rotateX(52deg) scale(1.1) translateY(15%);
+            transform: rotateX(54deg) scale(1.15) translateY(20%);
         }
 
-        /* BOTÃO DE VISTA NO TOPO */
         #btnVista { 
             position: absolute; top: 15px; right: 15px; z-index: 2000;
             background: #111; color: #00FF00; border: 2px solid #00FF00;
             padding: 12px; font-weight: bold; border-radius: 8px;
         }
 
-        /* QUADRADO VERDE - PAINEL FLUTUANTE */
+        /* PAINEL GPS AORUS */
         #painel { 
             position: absolute; bottom: 20px; left: 10px; 
             background: rgba(0,25,0,0.92); padding: 15px; 
             border: 3px solid #00FF00; z-index: 1000; 
             width: 250px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace; box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+            font-family: 'Courier New', monospace; box-shadow: 0 0 25px black;
         }
         #dados { font-size: 16px; font-weight: bold; line-height: 1.7; margin-bottom: 8px; }
         #btnLigar { background: #004400; color: white; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 5px; font-weight: bold; cursor: pointer; }
         
+        /* OS 5 PONTOS DE MARCAÇÃO */
         .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-vermelho { background: #b00 !important; color: white !important; grid-column: span 2; }
@@ -77,7 +77,7 @@ gps_aorus.html
         VEL: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (RECIFE)</button>
+        <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (OBJETO)</button>
         <button class="btn-m" onclick="marcar(1)">P1</button>
         <button class="btn-m" onclick="marcar(2)">P2</button>
         <button class="btn-m" onclick="marcar(3)">P3</button>
