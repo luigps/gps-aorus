@@ -2,78 +2,74 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR DE MAR</title>
+    <title>GPS AORUS - OPEN SOURCE SAT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #000a15; color: white; font-family: Arial; overflow: hidden; }
-        #cenario { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+        #map { width: 100vw; height: 100vh; z-index: 1; }
         
-        /* Mapa de alta escala para bater com as milhas */
-        #mapa-real { position: absolute; width: 20000px; height: 7000px; transform-origin: 0 0; z-index: 1; }
-        #costa-svg { width: 100%; height: 100%; }
-        
-        #barco { 
-            position: absolute; width: 30px; height: 30px; background: yellow; 
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); z-index: 100; 
-            display: none; transform: translate(-50%, -50%); border: 2px solid black; 
-        }
-        
-        /* QUADRADO VERDE - DADOS REAIS */
+        /* QUADRADO VERDE - O SEU COMANDO */
         #painel { 
-            position: absolute; bottom: 20px; left: 20px; background: rgba(0,30,0,0.95); 
-            padding: 15px; border: 3px solid #00FF00; z-index: 200; width: 240px; border-radius: 10px; 
+            position: absolute; bottom: 25px; left: 15px; 
+            background: rgba(0,25,0,0.9); padding: 15px; 
+            border: 3px solid #00FF00; z-index: 1000; 
+            width: 240px; border-radius: 10px; color: #00FF00;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 15px black;
         }
         
-        #dados { color: #00FF00; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold; line-height: 1.8; }
-        #btnLigar { background: #008800; color: white; width: 100%; padding: 18px; margin-bottom: 12px; font-size: 18px; border: 2px solid #00FF00; border-radius: 8px; cursor: pointer; }
+        #dados { font-size: 16px; font-weight: bold; line-height: 1.8; }
+        .vel-destaque { color: yellow; font-size: 22px; }
         
-        .nome-local { fill: white; font-size: 75px; font-weight: bold; text-shadow: 4px 4px black; }
-        .marca { position: absolute; width: 20px; height: 20px; background: red; border-radius: 50%; border: 2px solid white; transform: translate(-50%, -50%); z-index: 50; }
+        #btnLigar { 
+            background: #006600; color: white; width: 100%; padding: 15px; 
+            margin-bottom: 10px; border: 2px solid #00FF00; border-radius: 8px;
+            font-weight: bold; font-size: 16px; cursor: pointer;
+        }
+
+        /* BARCO AMARELO CUSTOMIZADO */
+        .icon-barco {
+            width: 0; height: 0; 
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 25px solid yellow;
+            filter: drop-shadow(0 0 5px black);
+        }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-<div id="cenario">
-    <div id="mapa-real">
-        <svg id="costa-svg" viewBox="0 0 20000 7000">
-            <path d="M0,0 L20000,0 L20000,1200 
-                     L18000,1300 L15000,1500 L12000,1400 L9500,1300 
-                     L7500,1200 L5500,1150 L4200,1300 L3200,1650 
-                     L2850,1950 L2500,1800 L1200,1700 L0,1750 Z" 
-                  fill="#3d2b1f" stroke="#c2a68c" stroke-width="35" />
-            
-            <text x="600" y="1550" class="nome-local">SAGRES</text>
-            <text x="1400" y="1600" class="nome-local">BURGAU</text>
-            <text x="2100" y="1700" class="nome-local">LUZ</text>
-            <text x="2600" y="1750" class="nome-local">P.MÓS</text>
-            <text x="3000" y="1900" class="nome-local">LAGOS (BARRA)</text>
-            <text x="5600" y="1050" class="nome-local">PORTIMÃO</text>
-            <text x="16000" y="1100" class="nome-local">VRSA</text>
-        </svg>
-        <div id="barco"></div>
-    </div>
-</div>
+<div id="map"></div>
 
 <div id="painel">
-    <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
+    <button id="btnLigar" onclick="ativarNavegacao()">LIGAR RADAR AORUS</button>
     <div id="dados">
         LAT: <span id="txtLat">00°00.0000</span><br>
         LON: <span id="txtLon">000°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow; font-size:22px;">0.0</span> kn<br>
+        VEL: <span id="vel" class="vel-destaque">0.0</span> kn<br>
         RUMO: <span id="rumo" style="color:cyan;">000</span>°
     </div>
-    <button style="width:100%; background:red; color:white; border:none; padding:12px; margin-top:10px; font-weight:bold; border-radius:6px;" onclick="marcar()">MARCAR 🔴</button>
 </div>
 
 <script>
-    let zoom = 0.25, mapX = 0, mapY = 0;
-    let barcoPos = { x: 3000, y: 2500 };
-    let evCache = []; let prevDiff = -1;
-    let lastX, lastY;
+    let mapa, marcadorBarco;
+    
+    // CONFIGURAÇÃO DO MAPA (CENTRO EM LAGOS)
+    mapa = L.map('map', {
+        center: [37.1000, -8.6700],
+        zoom: 13,
+        zoomControl: false, // Tirar os botões para não estorvar
+        attributionControl: false
+    });
 
-    // BALIZAS REAIS (LONGITUDE NEGATIVA PARA PORTUGAL)
-    const lonO = -9.0000, lonE = -7.3000, latN = 37.3500, latS = 36.6000;
+    // CAMADA DE SATÉLITE (ESRI OPEN SOURCE)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+    }).addTo(mapa);
 
     // FORMATO EXIGIDO: 37°06.2255
     function formatar(valor, isLat) {
@@ -84,73 +80,50 @@ gps_aorus.html
         return `${p}${g}°${m}`;
     }
 
-    async function iniciarGPS() {
+    async function ativarNavegacao() {
         document.getElementById('btnLigar').style.display = 'none';
+        
+        // Bloquear desligamento do ecrã
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
 
         navigator.geolocation.watchPosition(pos => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
-            
-            // ATUALIZAÇÃO DO QUADRADO VERDE
+            const vel = (pos.coords.speed * 1.94384 || 0).toFixed(1);
+            const rumo = Math.round(pos.coords.heading || 0);
+
+            // ATUALIZAR QUADRADO VERDE
             document.getElementById('txtLat').textContent = formatar(lat, true);
             document.getElementById('txtLon').textContent = formatar(lon, false);
-            document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
-            document.getElementById('rumo').textContent = Math.round(pos.coords.heading || 0).toString().padStart(3, '0');
+            document.getElementById('vel').textContent = vel;
+            document.getElementById('rumo').textContent = rumo.toString().padStart(3, '0');
 
-            // CÁLCULO DO BARCO
-            barcoPos.x = ((lon - lonO) / (lonE - lonO)) * 20000;
-            barcoPos.y = ((latN - lat) / (latN - latS)) * 7000;
-
-            const b = document.getElementById('barco');
-            b.style.display = 'block'; b.style.left = barcoPos.x + "px"; b.style.top = barcoPos.y + "px";
-        }, null, { enableHighAccuracy: true });
-        
-        centrarNoBarco();
-    }
-
-    const cenario = document.getElementById('cenario');
-    const mapa = document.getElementById('mapa-real');
-
-    // ARRASTO E ZOOM (SUAVE)
-    cenario.onpointerdown = e => { lastX = e.clientX; lastY = e.clientY; evCache.push(e); };
-    cenario.onpointermove = e => {
-        const index = evCache.findIndex(s => s.pointerId === e.pointerId);
-        evCache[index] = e;
-
-        if (evCache.length === 2) {
-            const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
-            if (prevDiff > 0) {
-                let fator = curDiff > prevDiff ? 1.015 : 0.985;
-                let oldZ = zoom; zoom *= fator;
-                if(zoom < 0.04) zoom = 0.04; if(zoom > 8) zoom = 8;
-                let midX = (evCache[0].clientX + evCache[1].clientX) / 2;
-                let midY = (evCache[0].clientY + evCache[1].clientY) / 2;
-                mapX = midX - (midX - mapX) * zoom / oldZ;
-                mapY = midY - (midY - mapY) * zoom / oldZ;
+            // POSICIONAR O BARCO NO MAPA REAL
+            const novaPos = [lat, lon];
+            
+            if (!marcadorBarco) {
+                const barcoIcon = L.divIcon({ className: 'icon-barco', iconSize: [24, 25], iconAnchor: [12, 12] });
+                marcadorBarco = L.marker(novaPos, { icon: barcoIcon }).addTo(mapa);
+                mapa.setView(novaPos, 16);
+            } else {
+                marcadorBarco.setLatLng(novaPos);
             }
-            prevDiff = curDiff;
-        } else if (evCache.length === 1 && lastX) {
-            mapX += e.clientX - lastX; mapY += e.clientY - lastY;
-            lastX = e.clientX; lastY = e.clientY;
-        }
-        mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
-    };
 
-    cenario.onpointerup = e => { evCache = evCache.filter(p => p.pointerId !== e.pointerId); lastX = null; prevDiff = -1; };
+            // RODAR O BARCO SE HOUVER RUMO
+            if (rumo) {
+                document.querySelector('.icon-barco').style.transform = `rotate(${rumo}deg)`;
+            }
 
-    function centrarNoBarco() {
-        mapX = (window.innerWidth / 2) - (barcoPos.x * zoom);
-        mapY = (window.innerHeight / 2) - (barcoPos.y * zoom);
-        mapa.style.transform = `translate(${mapX}px, ${mapY}px) scale(${zoom})`;
+        }, (err) => { alert("Erro de sinal: " + err.message); }, 
+        { enableHighAccuracy: true, maximumAge: 0 });
     }
 
-    function marcar() {
-        let d = document.createElement('div');
-        d.className = 'marca';
-        d.style.left = barcoPos.x + "px"; d.style.top = barcoPos.y + "px";
-        mapa.appendChild(d);
-    }
+    // MOSTRA COORDENADA DE ONDE TOCA (NO QUADRADO)
+    mapa.on('click', function(e) {
+        document.getElementById('txtLat').textContent = formatar(e.latlng.lat, true);
+        document.getElementById('txtLon').textContent = formatar(e.latlng.lng, false);
+    });
+
 </script>
 </body>
 </html>
