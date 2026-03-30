@@ -2,12 +2,9 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS</title>
+    <title>GPS AORUS - IMPORTADOR</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
 
@@ -18,63 +15,45 @@ gps_aorus.html
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
         body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
         
-        #map-container { 
-            width: 100vw; height: 100vh; 
-            perspective: 1100px; 
-            overflow: hidden;
-            position: absolute; top: 0; left: 0; z-index: 1;
-        }
-        
-        #map { 
-            width: 165%; height: 175%; 
-            left: -32.5%; top: -40%; 
-            position: absolute;
-            transition: transform 0.6s ease-out; 
-        }
-        
+        #map-container { width: 100vw; height: 100vh; perspective: 1100px; overflow: hidden; position: absolute; top: 0; left: 0; z-index: 1; }
+        #map { width: 165%; height: 175%; left: -32.5%; top: -40%; position: absolute; transition: transform 0.6s ease-out; }
         .vista-3d { transform: rotateX(52deg) translateY(18%) scale(1.15); }
 
-        #btnVista { 
-            position: absolute; top: 15px; right: 15px; z-index: 2000;
-            background: #111; color: #00FF00; border: 2px solid #00FF00;
-            padding: 12px; font-weight: bold; border-radius: 8px;
-        }
+        #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: #111; color: #00FF00; border: 2px solid #00FF00; padding: 12px; font-weight: bold; border-radius: 8px; }
 
         #painel { 
-            position: absolute; bottom: 20px; left: 10px; 
-            background: rgba(0,25,0,0.95); padding: 15px; 
+            position: absolute; bottom: 15px; left: 10px; 
+            background: rgba(0,25,0,0.95); padding: 12px; 
             border: 3px solid #00FF00; z-index: 1000; 
-            width: 255px; border-radius: 10px; color: #00FF00;
+            width: 260px; border-radius: 10px; color: #00FF00;
             font-family: 'Courier New', monospace; box-shadow: 0 0 25px black;
         }
-        #dados { font-size: 16px; font-weight: bold; line-height: 1.7; margin-bottom: 8px; }
-        #btnLigar { background: #005500; color: white; width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid #00FF00; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        #dados { font-size: 15px; font-weight: bold; line-height: 1.6; margin-bottom: 6px; }
+        #btnLigar { background: #005500; color: white; width: 100%; padding: 12px; margin-bottom: 8px; border: 2px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .btn-m { background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-vermelho { background: #c00 !important; color: white !important; grid-column: span 2; }
+        
+        /* BOTÃO DE IMPORTAR GPX */
+        .btn-import { background: #003366; color: #00FFFF; border: 1px solid #00FFFF; grid-column: span 2; margin-top: 5px; }
 
-        .seta-barco {
-            width: 0; height: 0; 
-            border-left: 10px solid transparent; border-right: 10px solid transparent;
-            border-bottom: 26px solid yellow;
-        }
+        .seta-barco { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; }
     </style>
 </head>
 <body>
 
 <button id="btnVista" onclick="alternarVista()">VISTA: CARTA 2D</button>
+<input type="file" id="f_gpx" style="display:none" accept=".gpx" onchange="lerGPX(this)">
 
-<div id="map-container">
-    <div id="map"></div>
-</div>
+<div id="map-container"><div id="map"></div></div>
 
 <div id="painel">
     <button id="btnLigar" onclick="iniciarGPS()">LIGAR GPS AORUS</button>
     <div id="dados">
         LAT: <span id="txtLat">37°00.0000</span><br>
         LON: <span id="txtLon">008°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow; font-size:20px;">0.0</span> kn
+        VEL: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
         <button class="btn-m btn-vermelho" onclick="marcar(0)">MARCA🔴 (OBJETO)</button>
@@ -82,6 +61,7 @@ gps_aorus.html
         <button class="btn-m" onclick="marcar(2)">P2</button>
         <button class="btn-m" onclick="marcar(3)">P3</button>
         <button class="btn-m" onclick="marcar(4)">P4</button>
+        <button class="btn-m btn-import" onclick="document.getElementById('f_gpx').click()">📥 CARREGAR PONTOS (GPX)</button>
     </div>
 </div>
 
@@ -90,7 +70,7 @@ gps_aorus.html
     let latA, lonA, modo3D = false;
     let pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {};
 
-    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 16, zoomControl: false, attributionControl: false });
+    mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 14, zoomControl: false, attributionControl: false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
@@ -98,30 +78,20 @@ gps_aorus.html
         modo3D = !modo3D;
         const m = document.getElementById('map');
         const b = document.getElementById('btnVista');
-        if(modo3D) { 
-            m.classList.add('vista-3d'); b.textContent = "VISTA: MAR 3D"; 
-            b.style.background = "#00FF00"; b.style.color = "black";
-        } else { 
-            m.classList.remove('vista-3d'); b.textContent = "VISTA: CARTA 2D"; 
-            b.style.background = "#111"; b.style.color = "#00FF00";
-        }
+        m.classList.toggle('vista-3d', modo3D);
+        b.textContent = modo3D ? "VISTA: MAR 3D" : "VISTA: CARTA 2D";
+        b.style.background = modo3D ? "#00FF00" : "#111";
+        b.style.color = modo3D ? "black" : "#00FF00";
     }
 
     function formatar(v, isLat) {
         let a = Math.abs(v); let g = Math.floor(a); let m = ((a - g) * 60).toFixed(4);
-        let p = isLat ? "" : (g < 100 ? (g < 10 ? "00" : "0") : "");
-        return `${p}${g}°${m}`;
+        return `${!isLat && g < 100 ? (g < 10 ? "00" : "0") : ""}${g}°${m}`;
     }
 
     async function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
-        
-        try {
-            if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-            }
-        } catch (err) { console.log("WakeLock ativo"); }
-
+        try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
         navigator.geolocation.watchPosition(pos => {
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             document.getElementById('txtLat').textContent = formatar(latA, true);
@@ -129,7 +99,7 @@ gps_aorus.html
             document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
             if (!barco) {
                 barco = L.marker([latA, lonA], { icon: L.divIcon({className:'seta-barco', iconAnchor:[10,13]}) }).addTo(mapa);
-                mapa.setView([latA, lonA], 17);
+                mapa.setView([latA, lonA], 16);
             } else { barco.setLatLng([latA, lonA]); }
         }, null, { enableHighAccuracy: true });
         desenhar();
@@ -142,10 +112,31 @@ gps_aorus.html
         desenhar();
     }
 
+    // FUNÇÃO PARA LER OS PONTOS DO FICHEIRO GPX
+    function lerGPX(input) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(reader.result, "text/xml");
+            const wpts = xml.getElementsByTagName("wpt");
+            for (let i = 0; i < wpts.length; i++) {
+                let lt = parseFloat(wpts[i].getAttribute("lat"));
+                let ln = parseFloat(wpts[i].getAttribute("lon"));
+                // Gera um ID único para não apagar os outros
+                let id = "GPX_" + Date.now() + "_" + i;
+                pontos[id] = { lat: lt, lon: ln };
+            }
+            localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+            desenhar();
+            alert(wpts.length + " pontos carregados com sucesso!");
+        };
+        reader.readAsText(input.files[0]);
+    }
+
     function desenhar() {
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
-            L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 8, color: 'white', weight: 2, fillColor: 'red', fillOpacity: 1}).addTo(camada);
+            L.circleMarker([pontos[id].lat, pontos[id].lon], {radius: 7, color: 'white', weight: 1.5, fillColor: 'red', fillOpacity: 1}).addTo(camada);
         });
     }
 
