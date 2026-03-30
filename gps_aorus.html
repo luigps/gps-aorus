@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR DE LAGOS</title>
+    <title>GPS AORUS - RIGOR TOTAL</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -35,8 +35,8 @@ gps_aorus.html
 
         .seta-barco { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; }
         
-        /* O RIGOR DA ÂNCORA VERMELHA E DAS BOLAS */
-        .icon-txt { font-size: 24px; text-shadow: 2px 2px 2px black; text-align: center; line-height: 1; }
+        /* DESENHO LIMPO DO ÍCONE */
+        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 3px black; text-align: center; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -54,11 +54,11 @@ gps_aorus.html
         VEL: <span id="vel" style="color:yellow;">0.0</span> kn
     </div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar('🔴')">MARCAR BARCO 🔴</button>
+        <button class="btn-m btn-vermelho" onclick="marcar('🔴', 'red')">MARCAR BARCO 🔴</button>
         
-        <button class="btn-m" onclick="marcar('⚓')">⚓<br>ÂNCORA</button>
-        <button class="btn-m" onclick="marcar('🟡')">🟡<br>AMARELA</button>
-        <button class="btn-m" onclick="marcar('⚫')">⚫<br>PRETA</button>
+        <button class="btn-m" onclick="marcar('⚓', 'red')">⚓<br>ÂNCORA</button>
+        <button class="btn-m" onclick="marcar('🟡', 'yellow')">🟡<br>AMARELA</button>
+        <button class="btn-m" onclick="marcar('⚫', 'white')">⚫<br>PRETA</button>
         
         <button class="btn-m btn-f" style="background:#003366 !important; color:#00FFFF !important;" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR CARTÃO</button>
         <button class="btn-m btn-f" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR</button>
@@ -79,8 +79,8 @@ gps_aorus.html
         Object.keys(pontos).forEach(id => {
             let p = pontos[id];
             let iconAorus = L.divIcon({
-                html: `<div class="icon-txt" style="color:${p.cor || 'white'}">${p.simbolo}</div>`,
-                className: 'custom-icon',
+                html: `<div class="icon-aorus" style="color:${p.cor}">${p.simbolo}</div>`,
+                className: 'custom-div-icon',
                 iconSize: [30, 30],
                 iconAnchor: [15, 15]
             });
@@ -88,10 +88,8 @@ gps_aorus.html
         });
     }
 
-    function marcar(simbolo) {
+    function marcar(simbolo, cor) {
         if (!latA) return;
-        // Se for âncora, forçamos a cor vermelha que estava perfeita
-        let cor = (simbolo === '⚓') ? 'red' : 'white';
         pontos["PT_"+Date.now()] = { lat: latA, lon: lonA, simbolo: simbolo, cor: cor };
         localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
@@ -106,18 +104,19 @@ gps_aorus.html
             for (let i = 0; i < wpts.length; i++) {
                 let lt = parseFloat(wpts[i].getAttribute("lat"));
                 let ln = parseFloat(wpts[i].getAttribute("lon"));
+                // Importa limpo como Bola Preta
                 pontos["IMP_"+Date.now()+"_"+i] = { lat: lt, lon: ln, simbolo: '⚫', cor: 'white' };
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
-            alert(wpts.length + " marcas importadas!");
+            alert(wpts.length + " marcas carregadas.");
         };
         reader.readAsText(input.files[0]);
     }
 
     function exportarELimpar() {
         if (Object.keys(pontos).length === 0) return;
-        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1">';
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS_Aorus">';
         Object.keys(pontos).forEach(id => {
             gpx += `\n  <wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${pontos[id].simbolo}</name></wpt>`;
         });
@@ -149,7 +148,7 @@ gps_aorus.html
             document.getElementById('vel').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
             if (!barco) {
                 barco = L.marker([latA, lonA], { icon: L.divIcon({className:'seta-barco', iconAnchor:[10,13]}) }).addTo(mapa);
-                mapa.setView([latA, lonA], 16);
+                mapa.setView([latA, lonA], 17);
             } else { barco.setLatLng([latA, lonA]); }
         }, null, { enableHighAccuracy: true });
         desenhar();
