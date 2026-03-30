@@ -2,7 +2,7 @@ gps_aorus.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - 180 PERCENTO</title>
+    <title>GPS AORUS - 220 PERCENTO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,25 +11,24 @@ gps_aorus.html
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
         body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
         
-        /* CONTENTOR DE PROFUNDIDADE */
         #map-container { 
             width: 100vw; height: 100vh; 
-            perspective: 1200px; 
+            perspective: 1400px; 
             overflow: hidden;
             position: absolute; top: 0; left: 0; z-index: 1;
         }
         
-        /* MAPA A 180% PARA NÃO DEIXAR PRETO NO TOPO */
+        /* MAPA A 220% - COBERTURA TOTAL */
         #map { 
-            width: 180%; height: 180%; 
-            left: -40%; top: -45%; /* Puxado para cima para cobrir o horizonte */
+            width: 220%; height: 220%; 
+            left: -60%; top: -65%; 
             position: absolute;
-            transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1); 
+            transition: transform 0.6s cubic-bezier(0.1, 0, 0.1, 1); 
         }
         
-        /* VISTA 3D - AVANÇA PARA CIMA E PARA BAIXO DO PAINEL */
+        /* VISTA 3D - FORÇA MÁXIMA NO HORIZONTE */
         .vista-3d { 
-            transform: rotateX(54deg) scale(1.15) translateY(20%);
+            transform: rotateX(56deg) scale(1.2) translateY(25%);
         }
 
         #btnVista { 
@@ -44,7 +43,7 @@ gps_aorus.html
             background: rgba(0,25,0,0.92); padding: 15px; 
             border: 3px solid #00FF00; z-index: 1000; 
             width: 250px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace; box-shadow: 0 0 25px black;
+            font-family: 'Courier New', monospace; box-shadow: 0 0 30px black;
         }
         #dados { font-size: 16px; font-weight: bold; line-height: 1.7; margin-bottom: 8px; }
         #btnLigar { background: #004400; color: white; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 5px; font-weight: bold; cursor: pointer; }
