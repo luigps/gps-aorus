@@ -1,4 +1,6 @@
 gps_aorus.html
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,50 +15,115 @@ gps_aorus.html
 
     <style>
         * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; }
-        
+        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; font-family: 'Courier New', monospace; }
+
+        /* ── MAPA ─────────────────────────────────────────────────────────── */
         #map-container { width: 100vw; height: 100vh; perspective: 1100px; overflow: hidden; position: absolute; top: 0; left: 0; z-index: 1; }
         #map { width: 165%; height: 175%; left: -32.5%; top: -40%; position: absolute; transition: transform 0.6s ease-out; }
         .vista-3d { transform: rotateX(52deg) translateY(18%) scale(1.15); }
 
-        /* CORRIGIDO: botão de vista mostra estado oposto (próxima ação) */
-        #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: #111; color: #00FF00; border: 2px solid #00FF00; padding: 12px; font-weight: bold; border-radius: 8px; font-family: 'Courier New', monospace; cursor: pointer; }
-
-        #painel { 
-            position: absolute; bottom: 15px; left: 10px; 
-            background: rgba(0,20,0,0.95); padding: 12px; 
-            border: 3px solid #00FF00; z-index: 1000; 
-            width: 300px; border-radius: 10px; color: #00FF00;
-            font-family: 'Courier New', monospace; box-shadow: 0 0 30px black;
-            max-height: 90vh; overflow-y: auto;
+        /* ── BOTÃO VISTA ──────────────────────────────────────────────────── */
+        #btnVista {
+            position: absolute; top: 15px; right: 15px; z-index: 2000;
+            background: rgba(0,20,0,0.9); color: #00FF00;
+            border: 2px solid #00FF00; padding: 10px 14px;
+            font-weight: bold; border-radius: 8px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-size: 12px;
         }
-        #dados { font-size: 14px; font-weight: bold; line-height: 1.6; margin-bottom: 8px; }
-        #btnLigar { background: #004400; color: #00FF00; width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; font-size: 14px; }
-        
+
+        /* ── PAINEL FIXO (sempre visível) ─────────────────────────────────── */
+        #painel-fixo {
+            position: absolute; bottom: 15px; left: 10px; z-index: 1000;
+            background: rgba(0,18,0,0.93);
+            border: 2px solid #00FF00;
+            border-radius: 10px;
+            padding: 10px 12px 8px;
+            width: 270px;
+            box-shadow: 0 0 24px rgba(0,255,0,0.12);
+            color: #00FF00;
+        }
+
+        #btnLigar {
+            background: #004400; color: #00FF00; width: 100%;
+            padding: 10px; margin-bottom: 8px;
+            border: 1px solid #00FF00; border-radius: 6px;
+            font-weight: bold; cursor: pointer;
+            font-family: 'Courier New', monospace; font-size: 13px;
+        }
+
+        #dados {
+            font-size: 15px; font-weight: bold; line-height: 1.8;
+            letter-spacing: 0.5px;
+        }
+        .lbl { color: #007700; font-size: 11px; }
+        #vel { color: #FFFF00; }
+        #hdg { color: #88FF88; }
+
+        /* Linha com botão gaveta + contador */
+        #barra-gaveta {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 10px; border-top: 1px solid #003300; padding-top: 8px;
+        }
+        #btnGaveta {
+            flex: 1; background: #002200; color: #00FF00;
+            border: 1px solid #00AA00; border-radius: 6px;
+            padding: 8px 6px; font-size: 11px; font-weight: bold;
+            cursor: pointer; font-family: 'Courier New', monospace;
+            letter-spacing: 1px; transition: background 0.2s;
+        }
+        #btnGaveta:active { background: #004400; }
+        #contadorMarcas {
+            background: #003300; color: #00FF00;
+            border: 1px solid #005500; border-radius: 12px;
+            padding: 4px 9px; font-size: 12px; font-weight: bold;
+            min-width: 28px; text-align: center;
+        }
+
+        /* ── GAVETA FANTASMA ──────────────────────────────────────────────── */
+        #gaveta {
+            position: absolute; bottom: 0; left: 0; z-index: 999;
+            width: 290px;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(0,12,0,0.97);
+            border: 2px solid #00FF00;
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            padding: 10px 10px 10px;
+            box-shadow: 0 -8px 40px rgba(0,255,0,0.1);
+        }
+        #gaveta.aberta { transform: translateY(0); }
+
+        #gaveta-alca {
+            width: 40px; height: 4px; background: #004400;
+            border-radius: 2px; margin: 0 auto 10px;
+        }
+
         .secao-label {
-            color: #00AA00; font-size: 10px; letter-spacing: 2px;
-            text-transform: uppercase; border-top: 1px solid #003300;
-            padding-top: 6px; margin-top: 4px; margin-bottom: 4px;
+            color: #007700; font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase;
+            border-top: 1px solid #002200;
+            padding-top: 6px; margin-top: 2px; margin-bottom: 6px;
         }
 
         .grid-marcas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
-        .btn-m { 
-            background: #1a1a1a; color: #00FF00; border: 1px solid #00FF00; 
-            padding: 12px 4px; border-radius: 5px; font-weight: bold; cursor: pointer; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        .btn-m {
+            background: #111; color: #00FF00; border: 1px solid #00FF00;
+            padding: 11px 4px; border-radius: 5px; font-weight: bold; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-size: 10px; font-family: 'Courier New', monospace; line-height: 1.4;
-            transition: background 0.15s;
+            transition: background 0.12s;
         }
         .btn-m:active { background: #003300 !important; }
-        .btn-m .ico { font-size: 18px; margin-bottom: 2px; }
+        .btn-m .ico { font-size: 17px; margin-bottom: 2px; }
 
-        .btn-vermelho  { background: #5a0000 !important; color: #FF4444 !important; border-color: #FF4444 !important; grid-column: span 3; font-size: 13px; }
-        .btn-span2     { grid-column: span 2; }
-        .btn-util      { grid-column: span 3; font-size: 11px; background: #222 !important; height: 36px; margin-top: 4px; }
-        .btn-importar  { background: #003366 !important; color: #00CCFF !important; border-color: #00CCFF !important; }
-        .btn-exportar  { background: #1a1a00 !important; color: #FFFF00 !important; border-color: #FFFF00 !important; }
+        .btn-vermelho { background: #4a0000 !important; color: #FF5555 !important; border-color: #FF5555 !important; grid-column: span 3; font-size: 13px; }
+        .btn-span2    { grid-column: span 2; }
+        .btn-importar { background: #002244 !important; color: #00CCFF !important; border-color: #00CCFF !important; }
+        .btn-exportar { background: #1a1a00 !important; color: #FFFF00 !important; border-color: #FFFF00 !important; }
+        .btn-util     { grid-column: span 3; font-size: 11px; height: 34px; margin-top: 4px; }
 
-        /* CORRIGIDO: seta do barco via html inline para garantir renderização */
+        /* Ícones no mapa */
         .barco-seta {
             width: 0; height: 0;
             border-left: 10px solid transparent;
@@ -64,7 +131,11 @@ gps_aorus.html
             border-bottom: 26px solid yellow;
             filter: drop-shadow(0 0 4px #FF0);
         }
-        .icon-aorus { font-size: 24px; text-shadow: 1px 1px 3px black, 0 0 6px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; }
+        .icon-aorus {
+            font-size: 24px;
+            text-shadow: 1px 1px 3px black, 0 0 6px rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -74,14 +145,25 @@ gps_aorus.html
 
 <div id="map-container"><div id="map"></div></div>
 
-<div id="painel">
+<!-- ── PAINEL FIXO ─── sempre visível ────────────────────────────────────── -->
+<div id="painel-fixo">
     <button id="btnLigar" onclick="iniciarGPS()">⚡ LIGAR GPS AORUS</button>
+
     <div id="dados">
-        LAT: <span id="txtLat">37°00.0000</span><br>
-        LON: <span id="txtLon">008°00.0000</span><br>
-        VEL: <span id="vel" style="color:yellow;">0.0</span> kn &nbsp;
-        HDG: <span id="hdg" style="color:#88FF88;">---</span>°
+        <span class="lbl">LAT </span><span id="txtLat">37°00.0000</span><br>
+        <span class="lbl">LON </span><span id="txtLon">008°00.0000</span><br>
+        <span class="lbl">VEL </span><span id="vel">0.0</span><span class="lbl"> kn &nbsp; HDG </span><span id="hdg">---</span><span class="lbl">°</span>
     </div>
+
+    <div id="barra-gaveta">
+        <button id="btnGaveta" onclick="toggleGaveta()">▲ MARCAS &amp; WAYPOINTS</button>
+        <span id="contadorMarcas">0</span>
+    </div>
+</div>
+
+<!-- ── GAVETA FANTASMA ─── escondida por defeito ────────────────────────── -->
+<div id="gaveta">
+    <div id="gaveta-alca"></div>
 
     <div class="secao-label">◆ MARCAS RÁPIDAS</div>
     <div class="grid-marcas">
@@ -97,8 +179,6 @@ gps_aorus.html
         <button class="btn-m" onclick="marcar('⚫','#CCCCCC')">
             <span class="ico">⚫</span>PRETA
         </button>
-
-        <!-- ===== 7 NOVOS WAYPOINTS ===== -->
         <button class="btn-m" onclick="marcar('⚠️','#FF8800')">
             <span class="ico">⚠️</span>PERIGO
         </button>
@@ -120,7 +200,6 @@ gps_aorus.html
         <button class="btn-m btn-span2" onclick="marcar('🆘','#FF0000')">
             <span class="ico">🆘</span>EMERGÊNCIA
         </button>
-        <!-- ============================= -->
     </div>
 
     <div class="secao-label">◆ FICHEIROS</div>
@@ -136,33 +215,51 @@ gps_aorus.html
 
 <script>
     let mapa, barco, camada, wakeLock = null;
-    let latA = null, lonA = null, modo3D = false;
+    let latA = null, lonA = null, modo3D = false, gavaetaAberta = false;
     let pontos = {};
 
-    // Carrega pontos guardados de forma segura
     try { pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {}; } catch(e) { pontos = {}; }
 
     mapa = L.map('map', { center: [37.1000, -8.6700], zoom: 15, zoomControl: false, attributionControl: false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapa);
     camada = L.layerGroup().addTo(mapa);
 
-    // ── Renderiza todos os pontos guardados ──────────────────────────────────
+    // ── Gaveta: abrir / fechar ────────────────────────────────────────────────
+    function toggleGaveta() {
+        gavaetaAberta = !gavaetaAberta;
+        document.getElementById('gaveta').classList.toggle('aberta', gavaetaAberta);
+        document.getElementById('btnGaveta').textContent =
+            gavaetaAberta ? '▼ FECHAR MARCAS' : '▲ MARCAS & WAYPOINTS';
+    }
+
+    // Fechar gaveta ao tocar no mapa
+    document.getElementById('map-container').addEventListener('pointerdown', () => {
+        if (gavaetaAberta) toggleGaveta();
+    });
+
+    // ── Contador de marcas ────────────────────────────────────────────────────
+    function atualizarContador() {
+        document.getElementById('contadorMarcas').textContent = Object.keys(pontos).length;
+    }
+
+    // ── Renderiza pontos no mapa ─────────────────────────────────────────────
     function desenhar() {
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
             let p = pontos[id];
             let iconAorus = L.divIcon({
                 html: `<div class="icon-aorus" style="color:${p.cor || 'white'}">${p.simbolo}</div>`,
-                className: '',           // evita estilos padrão do Leaflet que interferem
+                className: '',
                 iconSize: [32, 32],
                 iconAnchor: [16, 16]
             });
             let marker = L.marker([p.lat, p.lon], { icon: iconAorus }).addTo(camada);
             marker.bindTooltip(
                 `${p.simbolo} ${formatar(p.lat, true)} / ${formatar(p.lon, false)}`,
-                { permanent: false, direction: 'top', className: 'tt-aorus' }
+                { permanent: false, direction: 'top' }
             );
         });
+        atualizarContador();
     }
 
     // ── Marca posição actual ─────────────────────────────────────────────────
@@ -172,9 +269,11 @@ gps_aorus.html
         pontos[id] = { lat: latA, lon: lonA, simbolo: simbolo, cor: cor };
         localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
+        // Fecha gaveta após marcar
+        if (gavaetaAberta) toggleGaveta();
     }
 
-    // ── Importa ficheiro GPX ─────────────────────────────────────────────────
+    // ── Importa GPX ──────────────────────────────────────────────────────────
     function lerGPX(input) {
         if (!input.files.length) return;
         const reader = new FileReader();
@@ -188,7 +287,6 @@ gps_aorus.html
                     let lt = parseFloat(wpts[i].getAttribute('lat'));
                     let ln = parseFloat(wpts[i].getAttribute('lon'));
                     if (isNaN(lt) || isNaN(ln)) continue;
-                    // CORRIGIDO: chave única mesmo para importações rápidas
                     pontos['IMP_' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2,5)] =
                         { lat: lt, lon: ln, simbolo: '⚫', cor: '#CCCCCC' };
                     n++;
@@ -199,7 +297,7 @@ gps_aorus.html
             } catch(e) {
                 alert('Erro ao ler GPX: ' + e.message);
             }
-            input.value = ''; // permite reimportar o mesmo ficheiro
+            input.value = '';
         };
         reader.readAsText(input.files[0]);
     }
@@ -227,7 +325,6 @@ gps_aorus.html
     }
 
     // ── Alternar vista 2D / 3D ───────────────────────────────────────────────
-    // CORRIGIDO: texto mostra a ação possível, não o estado actual
     function alternarVista() {
         modo3D = !modo3D;
         document.getElementById('map').classList.toggle('vista-3d', modo3D);
@@ -249,9 +346,8 @@ gps_aorus.html
         document.getElementById('btnLigar').style.display = 'none';
         try {
             if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
-        } catch (e) { /* sem wake lock, continua na mesma */ }
+        } catch (e) {}
 
-        // CORRIGIDO: ícone do barco com html explícito para garantir CSS aplicado
         const barcoIcon = L.divIcon({
             html: '<div class="barco-seta"></div>',
             className: '',
@@ -263,7 +359,6 @@ gps_aorus.html
             pos => {
                 latA = pos.coords.latitude;
                 lonA = pos.coords.longitude;
-                // CORRIGIDO: speed pode ser null — tratado com fallback seguro
                 const spd = (pos.coords.speed != null && !isNaN(pos.coords.speed))
                     ? (pos.coords.speed * 1.94384).toFixed(1) : '0.0';
                 const hdg = (pos.coords.heading != null && !isNaN(pos.coords.heading))
@@ -293,9 +388,8 @@ gps_aorus.html
         document.getElementById('txtLon').textContent = formatar(e.latlng.lng, false);
     });
 
-    // Renderiza pontos já guardados ao arrancar
+    // Renderiza pontos guardados ao arrancar
     desenhar();
 </script>
 </body>
 </html>
-
