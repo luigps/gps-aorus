@@ -50,8 +50,10 @@ gps_aorus.html
         .btn-importar { background: #002244 !important; color: #00CCFF !important; border-color: #00CCFF !important; }
         .btn-exportar { background: #333 !important; color: #FFF !important; border-color: #FFF !important; grid-column: span 2; }
 
+        /* Estilo da seta do barco */
+        .barco-container { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s linear; }
         .barco-seta { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; filter: drop-shadow(0 0 4px #FF0); }
-        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 4px black; display: flex; align-items: center; justify-content: center; }
+        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 4px black; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -133,12 +135,22 @@ gps_aorus.html
 
     function atualizarContador() { document.getElementById('contadorMarcas').textContent = Object.keys(pontos).length; }
 
+    function apagarMarca(id) {
+        if(confirm("Deseja apagar esta marca?")) {
+            delete pontos[id];
+            localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+            desenhar();
+        }
+    }
+
     function desenhar() {
         camada.clearLayers();
         Object.keys(pontos).forEach(id => {
             let p = pontos[id];
             let iconAorus = L.divIcon({ html: `<div class="icon-aorus" style="color:${p.cor}">${p.simbolo}</div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
-            L.marker([p.lat, p.lon], { icon: iconAorus }).addTo(camada);
+            let m = L.marker([p.lat, p.lon], { icon: iconAorus }).addTo(camada);
+            // Ao clicar na marca, abre opção de apagar
+            m.on('click', () => apagarMarca(id));
         });
         atualizarContador();
     }
@@ -191,15 +203,30 @@ gps_aorus.html
         document.getElementById('btnLigar').style.display = 'none';
         navigator.geolocation.watchPosition(pos => {
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
+            let rumo = pos.coords.heading || 0;
+            
             document.getElementById('txtLat').textContent = formatar(latA, true);
             document.getElementById('txtLon').textContent = formatar(lonA, false);
             document.getElementById('vel').textContent = (pos.coords.speed * 1.943 || 0).toFixed(1);
             document.getElementById('hdg').textContent = pos.coords.heading ? Math.round(pos.coords.heading) : '---';
+            
             if (gravarRasto) { rastoCoords.push([latA, lonA]); rastoLinha.setLatLngs(rastoCoords); }
+            
             if (!barco) {
-                barco = L.marker([latA, lonA], { icon: L.divIcon({html:'<div class="barco-seta"></div>', className:'', iconSize:[20,26]}) }).addTo(mapa);
+                barco = L.marker([latA, lonA], { 
+                    icon: L.divIcon({
+                        html:`<div class="barco-container" id="seta-barco" style="transform: rotate(${rumo}deg)"><div class="barco-seta"></div></div>`, 
+                        className:'', 
+                        iconSize:[30,30], 
+                        iconAnchor:[15,15]
+                    }) 
+                }).addTo(mapa);
                 mapa.setView([latA, lonA], 17);
-            } else { barco.setLatLng([latA, lonA]); }
+            } else { 
+                barco.setLatLng([latA, lonA]);
+                let el = document.getElementById('seta-barco');
+                if(el) el.style.transform = `rotate(${rumo}deg)`;
+            }
         }, null, { enableHighAccuracy: true });
         desenhar();
     }
