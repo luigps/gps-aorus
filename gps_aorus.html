@@ -12,42 +12,47 @@ gps_aorus.html
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        * { touch-action: none; -webkit-user-select: none; box-sizing: border-box; }
+        * { touch-action: pan-y; -webkit-user-select: none; box-sizing: border-box; }
         body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; font-family: 'Courier New', monospace; }
 
         #map-container { width: 100vw; height: 100vh; perspective: 1100px; overflow: hidden; position: absolute; top: 0; left: 0; z-index: 1; }
         #map { width: 165%; height: 175%; left: -32.5%; top: -40%; position: absolute; transition: transform 0.6s ease-out; }
         .vista-3d { transform: rotateX(52deg) translateY(18%) scale(1.15); }
 
-        #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(0,20,0,0.9); color: #00FF00; border: 2px solid #00FF00; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(0,20,0,0.9); color: #00FF00; border: 2px solid #00FF00; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
 
         #painel-fixo { position: absolute; bottom: 15px; left: 10px; z-index: 1000; background: rgba(0,18,0,0.93); border: 2px solid #00FF00; border-radius: 10px; padding: 10px 12px 8px; width: 270px; color: #00FF00; }
         #btnLigar { background: #004400; color: #00FF00; width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         #dados { font-size: 15px; font-weight: bold; line-height: 1.8; }
         .lbl { color: #007700; font-size: 11px; }
-        #vel { color: #FFFF00; }
         
         #barra-gaveta { display: flex; align-items: center; gap: 8px; margin-top: 10px; border-top: 1px solid #003300; padding-top: 8px; }
-        #btnGaveta { flex: 1; background: #002200; color: #00FF00; border: 1px solid #00AA00; border-radius: 6px; padding: 8px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        #btnGaveta { flex: 1; background: #002200; color: #00FF00; border: 1px solid #00AA00; border-radius: 6px; padding: 10px 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
         #contadorMarcas { background: #003300; color: #00FF00; border: 1px solid #005500; border-radius: 12px; padding: 4px 9px; font-size: 12px; min-width: 28px; text-align: center; }
 
-        #gaveta { position: absolute; bottom: 0; left: 0; z-index: 999; width: 290px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,12,0,0.97); border: 2px solid #00FF00; border-bottom: none; border-radius: 12px 12px 0 0; padding: 10px; }
+        /* GAVETA AJUSTADA PARA APARECER TODA */
+        #gaveta { 
+            position: absolute; bottom: 0; left: 0; z-index: 3000; 
+            width: 100%; max-width: 300px; 
+            max-height: 85vh; overflow-y: auto; 
+            transform: translateY(100%); transition: transform 0.3s ease; 
+            background: rgba(0,10,0,0.98); border: 2px solid #00FF00; border-bottom: none; 
+            border-radius: 15px 15px 0 0; padding: 15px; 
+            box-shadow: 0 -10px 40px black;
+        }
         #gaveta.aberta { transform: translateY(0); }
-        #gaveta-alca { width: 40px; height: 4px; background: #004400; border-radius: 2px; margin: 0 auto 10px; }
+        #gaveta-alca { width: 50px; height: 5px; background: #005500; border-radius: 3px; margin: 0 auto 15px; }
 
-        .secao-label { color: #007700; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; border-top: 1px solid #002200; padding-top: 6px; margin-top: 2px; margin-bottom: 6px; }
-        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
-        .btn-m { background: #111; color: #00FF00; border: 1px solid #00FF00; padding: 11px 4px; border-radius: 5px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; }
-        .btn-vermelho { background: #4a0000 !important; color: #FF5555 !important; border-color: #FF5555 !important; grid-column: span 3; font-size: 13px; }
-        
-        /* BOTÕES DE RASTO E FICHEIROS */
-        .btn-rasto { background: #1a1a00 !important; color: #FFFF00 !important; border-color: #FFFF00 !important; font-size: 9px; }
-        .btn-util { grid-column: span 3; font-size: 11px; height: 34px; margin-top: 4px; }
-        .btn-importar { background: #002244 !important; color: #00CCFF !important; border-color: #00CCFF !important; grid-column: span 1; }
-        .btn-exportar { background: #222 !important; color: #FFFFFF !important; border-color: #FFFFFF !important; grid-column: span 2; }
+        .secao-label { color: #00FF00; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; border-top: 1px solid #003300; padding-top: 10px; margin-top: 10px; margin-bottom: 8px; font-weight: bold; }
+        .grid-marcas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+        .btn-m { background: #111; color: #00FF00; border: 1px solid #00FF00; padding: 12px 4px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; }
+        .btn-vermelho { background: #600 !important; color: white !important; grid-column: span 3; font-size: 13px; margin-bottom: 5px; }
+        .btn-rasto { background: #1a1a00 !important; color: #FFFF00 !important; border-color: #FFFF00 !important; }
+        .btn-importar { background: #002244 !important; color: #00CCFF !important; border-color: #00CCFF !important; }
+        .btn-exportar { background: #333 !important; color: #FFF !important; border-color: #FFF !important; grid-column: span 2; }
 
         .barco-seta { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; filter: drop-shadow(0 0 4px #FF0); }
-        .icon-aorus { font-size: 24px; text-shadow: 1px 1px 3px black; display: flex; align-items: center; justify-content: center; }
+        .icon-aorus { font-size: 26px; text-shadow: 2px 2px 4px black; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -65,34 +70,35 @@ gps_aorus.html
         <span class="lbl">VEL </span><span id="vel">0.0</span><span class="lbl"> kn &nbsp; HDG </span><span id="hdg">---</span><span class="lbl">°</span>
     </div>
     <div id="barra-gaveta">
-        <button id="btnGaveta" onclick="toggleGaveta()">▲ MARCAS &amp; WAYPOINTS</button>
+        <button id="btnGaveta" onclick="toggleGaveta()">▲ ABRIR MENU MARCAS</button>
         <span id="contadorMarcas">0</span>
     </div>
 </div>
 
-<div id="gaveta">
-    <div id="gaveta-alca"></div>
+<div id="gaveta" id="minhaGaveta">
+    <div id="gaveta-alca" onclick="toggleGaveta()"></div>
     <div class="secao-label">◆ MARCAS RÁPIDAS</div>
     <div class="grid-marcas">
-        <button class="btn-m btn-vermelho" onclick="marcar('🔴','#FF4444')">🔴 MARCAR POSIÇÃO</button>
+        <button class="btn-m btn-vermelho" onclick="marcar('🔴','#FF4444')">🔴 MARCAR POSIÇÃO AGORA</button>
         <button class="btn-m" onclick="marcar('⚓','#AAAAFF')">⚓ ÂNCORA</button>
         <button class="btn-m" onclick="marcar('🟡','#FFFF00')">🟡 AMARELA</button>
-        <button class="btn-m" onclick="marcar('⚫','#CCCCCC')">⚫ PRETA</button>
+        <button class="btn-m" onclick="marcar('⚫','#888888')">⚫ PRETA</button>
         <button class="btn-m" onclick="marcar('🐟','#00FFCC')">🐟 PESCA</button>
         <button class="btn-m" onclick="marcar('⚠️','#FF8800')">⚠️ PERIGO</button>
         <button class="btn-m" onclick="marcar('🪨','#888888')">🪨 ROCHEDO</button>
     </div>
 
-    <div class="secao-label">◆ NAVEGAÇÃO / RASTO</div>
+    <div class="secao-label">◆ RASTO DE NAVEGAÇÃO</div>
     <div class="grid-marcas">
-        <button id="btnRasto" class="btn-m btn-rasto" onclick="toggleRasto()">🟡 DEIXAR RASTO: OFF</button>
-        <button class="btn-m btn-rasto" style="grid-column: span 2;" onclick="apagarRasto()">🗑️ APAGAR RASTO ATUAL</button>
+        <button id="btnRasto" class="btn-m btn-rasto" onclick="toggleRasto()">🟡 RASTO: OFF</button>
+        <button class="btn-m btn-rasto" style="grid-column: span 2;" onclick="apagarRasto()">🗑️ LIMPAR LINHA RASTO</button>
     </div>
 
-    <div class="secao-label">◆ FICHEIROS (GPX)</div>
+    <div class="secao-label">◆ FICHEIROS E DADOS</div>
     <div class="grid-marcas">
         <button class="btn-m btn-importar" onclick="document.getElementById('f_gpx').click()">📥 GPX</button>
         <button class="btn-m btn-exportar" onclick="exportarELimpar()">📤 EXPORTAR E LIMPAR MAPA</button>
+        <button class="btn-m" style="grid-column: span 3; background: #200; border-color: red;" onclick="toggleGaveta()">✖ FECHAR ESTE MENU</button>
     </div>
 </div>
 
@@ -110,21 +116,19 @@ gps_aorus.html
 
     function toggleGaveta() {
         gavaetaAberta = !gavaetaAberta;
-        document.getElementById('gaveta').classList.toggle('aberta', gavaetaAberta);
-        document.getElementById('btnGaveta').textContent = gavaetaAberta ? '▼ FECHAR MARCAS' : '▲ MARCAS & WAYPOINTS';
+        const g = document.getElementById('gaveta');
+        g.classList.toggle('aberta', gavaetaAberta);
+        document.getElementById('btnGaveta').textContent = gavaetaAberta ? '▼ FECHAR MENU' : '▲ ABRIR MENU MARCAS';
+        if(gavaetaAberta) g.scrollTop = 0;
     }
 
     function toggleRasto() {
         gravarRasto = !gravarRasto;
-        document.getElementById('btnRasto').textContent = gravarRasto ? '🟢 DEIXAR RASTO: ON' : '🟡 DEIXAR RASTO: OFF';
+        document.getElementById('btnRasto').textContent = gravarRasto ? '🟢 RASTO: ON' : '🟡 RASTO: OFF';
         document.getElementById('btnRasto').style.background = gravarRasto ? '#004400' : '#1a1a00';
     }
 
-    function apagarRasto() {
-        rastoCoords = [];
-        rastoLinha.setLatLngs([]);
-        alert("Rasto apagado.");
-    }
+    function apagarRasto() { rastoCoords = []; rastoLinha.setLatLngs([]); alert("Rasto apagado."); }
 
     function atualizarContador() { document.getElementById('contadorMarcas').textContent = Object.keys(pontos).length; }
 
@@ -143,7 +147,7 @@ gps_aorus.html
         pontos['PT_'+Date.now()] = { lat: latA, lon: lonA, simbolo: simbolo, cor: cor };
         localStorage.setItem('ptsAorus', JSON.stringify(pontos));
         desenhar();
-        if (gavaetaAberta) toggleGaveta();
+        toggleGaveta();
     }
 
     function lerGPX(input) {
@@ -157,16 +161,19 @@ gps_aorus.html
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
+            toggleGaveta();
         };
         reader.readAsText(input.files[0]);
     }
 
     function exportarELimpar() {
+        if (Object.keys(pontos).length === 0) return;
         let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS_AORUS">';
         Object.keys(pontos).forEach(id => { gpx += `<wpt lat="${pontos[id].lat}" lon="${pontos[id].lon}"><name>${pontos[id].simbolo}</name></wpt>`; });
         gpx += '</gpx>';
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([gpx], {type:'text/xml'})); a.download = 'MARCAS.gpx'; a.click();
         pontos = {}; localStorage.removeItem('ptsAorus'); desenhar();
+        toggleGaveta();
     }
 
     function alternarVista() {
@@ -186,14 +193,9 @@ gps_aorus.html
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             document.getElementById('txtLat').textContent = formatar(latA, true);
             document.getElementById('txtLon').textContent = formatar(lonA, false);
-            document.getElementById('vel').textContent = (pos.coords.speed * 1.943).toFixed(1);
+            document.getElementById('vel').textContent = (pos.coords.speed * 1.943 || 0).toFixed(1);
             document.getElementById('hdg').textContent = pos.coords.heading ? Math.round(pos.coords.heading) : '---';
-
-            if (gravarRasto) {
-                rastoCoords.push([latA, lonA]);
-                rastoLinha.setLatLngs(rastoCoords);
-            }
-
+            if (gravarRasto) { rastoCoords.push([latA, lonA]); rastoLinha.setLatLngs(rastoCoords); }
             if (!barco) {
                 barco = L.marker([latA, lonA], { icon: L.divIcon({html:'<div class="barco-seta"></div>', className:'', iconSize:[20,26]}) }).addTo(mapa);
                 mapa.setView([latA, lonA], 17);
