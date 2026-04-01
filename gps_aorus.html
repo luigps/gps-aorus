@@ -20,6 +20,9 @@ gps_aorus.html
 
         #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(0,20,0,0.9); color: #00FF00; border: 2px solid #00FF00; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
 
+        /* NOVO BOTÃO DE SEGUIR BARCO */
+        #btnSeguir { position: absolute; top: 70px; right: 15px; z-index: 2000; background: #004400; color: #00FF00; border: 2px solid #00FF00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
+
         #painel-fixo { position: absolute; bottom: 15px; left: 10px; z-index: 1000; background: rgba(0,18,0,0.93); border: 2px solid #00FF00; border-radius: 10px; padding: 10px 12px 8px; width: 270px; color: #00FF00; }
         #btnLigar { background: #004400; color: #00FF00; width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         #dados { font-size: 15px; font-weight: bold; line-height: 1.8; }
@@ -58,6 +61,8 @@ gps_aorus.html
 <body>
 
 <button id="btnVista" onclick="alternarVista()">▲ VISTA 3D</button>
+<button id="btnSeguir" onclick="toggleSeguir()">⚓ SEGUIR: ON</button>
+
 <input type="file" id="f_gpx" style="display:none" accept=".gpx" onchange="lerGPX(this)">
 
 <div id="map-container"><div id="map"></div></div>
@@ -109,6 +114,7 @@ gps_aorus.html
 <script>
     let mapa, barco, camada, rastoLinha, wakeLock = null;
     let latA = null, lonA = null, modo3D = false, gavaetaAberta = false, gravarRasto = false;
+    let seguirBarco = true; // CONTROLADOR DO MOVIMENTO DA CARTA
     let pontos = {}, rastoCoords = [];
 
     try { pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {}; } catch(e) { pontos = {}; }
@@ -118,13 +124,25 @@ gps_aorus.html
     camada = L.layerGroup().addTo(mapa);
     rastoLinha = L.polyline([], {color: 'yellow', weight: 3, opacity: 0.8}).addTo(mapa);
 
-    // FUNÇÃO PARA O ECRÃ NÃO APAGAR
     async function manterEcraLigado() {
         try {
             if ('wakeLock' in navigator) {
                 wakeLock = await navigator.wakeLock.request('screen');
             }
         } catch (err) { console.log("WakeLock erro."); }
+    }
+
+    // FUNÇÃO PARA LIGAR/DESLIGAR O SEGUIMENTO AUTOMÁTICO
+    function toggleSeguir() {
+        seguirBarco = !seguirBarco;
+        const btn = document.getElementById('btnSeguir');
+        btn.textContent = seguirBarco ? '⚓ SEGUIR: ON' : '🖐️ LIVRE';
+        btn.style.background = seguirBarco ? '#004400' : '#440000';
+        
+        // Se voltarmos a ligar, centra logo no barco
+        if (seguirBarco && latA) {
+            mapa.setView([latA, lonA], mapa.getZoom());
+        }
     }
 
     function toggleGaveta() {
@@ -208,10 +226,9 @@ gps_aorus.html
 
     function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
-        manterEcraLigado(); // Ativa luz constante
+        manterEcraLigado();
 
         navigator.geolocation.watchPosition(pos => {
-            // FILTRO ANTI-SALTO: Se o erro for muito grande (>30m), ignora
             if (pos.coords.accuracy > 30) return;
 
             latA = pos.coords.latitude; 
@@ -234,20 +251,22 @@ gps_aorus.html
                         iconAnchor:[15,15]
                     }) 
                 }).addTo(mapa);
+                mapa.setView([latA, lonA], 17);
             } else { 
                 barco.setLatLng([latA, lonA]);
                 let el = document.getElementById('seta-barco');
                 if(el) el.style.transform = `rotate(${rumo}deg)`;
             }
 
-            // ACOMPANHA O BARCO: Mantém o barco no centro do ecrã
-            mapa.setView([latA, lonA], mapa.getZoom());
+            // SÓ MOVE A CARTA SE O MODO "SEGUIR" ESTIVER LIGADO
+            if (seguirBarco) {
+                mapa.setView([latA, lonA], mapa.getZoom());
+            }
 
         }, null, { enableHighAccuracy: true, maximumAge: 0 });
         desenhar();
     }
 
-    // Re-ativa o bloqueio do ecrã se o telemóvel for desbloqueado
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') manterEcraLigado();
     });
