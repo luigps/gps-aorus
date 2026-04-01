@@ -50,7 +50,6 @@ gps_aorus.html
         .btn-importar { background: #002244 !important; color: #00CCFF !important; border-color: #00CCFF !important; }
         .btn-exportar { background: #333 !important; color: #FFF !important; border-color: #FFF !important; grid-column: span 2; }
 
-        /* Estilo da seta do barco */
         .barco-container { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s linear; }
         .barco-seta { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; filter: drop-shadow(0 0 4px #FF0); }
         .icon-aorus { font-size: 26px; text-shadow: 2px 2px 4px black; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -119,6 +118,15 @@ gps_aorus.html
     camada = L.layerGroup().addTo(mapa);
     rastoLinha = L.polyline([], {color: 'yellow', weight: 3, opacity: 0.8}).addTo(mapa);
 
+    // FUNÇÃO PARA O ECRÃ NÃO APAGAR
+    async function manterEcraLigado() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) { console.log("WakeLock erro."); }
+    }
+
     function toggleGaveta() {
         gavaetaAberta = !gavaetaAberta;
         document.getElementById('gaveta').classList.toggle('aberta', gavaetaAberta);
@@ -149,7 +157,6 @@ gps_aorus.html
             let p = pontos[id];
             let iconAorus = L.divIcon({ html: `<div class="icon-aorus" style="color:${p.cor}">${p.simbolo}</div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
             let m = L.marker([p.lat, p.lon], { icon: iconAorus }).addTo(camada);
-            // Ao clicar na marca, abre opção de apagar
             m.on('click', () => apagarMarca(id));
         });
         atualizarContador();
@@ -199,10 +206,16 @@ gps_aorus.html
         return `${!isLat && g < 100 ? (g < 10 ? '00' : '0') : ''}${g}°${m}`;
     }
 
-    async function iniciarGPS() {
+    function iniciarGPS() {
         document.getElementById('btnLigar').style.display = 'none';
+        manterEcraLigado(); // Ativa luz constante
+
         navigator.geolocation.watchPosition(pos => {
-            latA = pos.coords.latitude; lonA = pos.coords.longitude;
+            // FILTRO ANTI-SALTO: Se o erro for muito grande (>30m), ignora
+            if (pos.coords.accuracy > 30) return;
+
+            latA = pos.coords.latitude; 
+            lonA = pos.coords.longitude;
             let rumo = pos.coords.heading || 0;
             
             document.getElementById('txtLat').textContent = formatar(latA, true);
@@ -221,15 +234,24 @@ gps_aorus.html
                         iconAnchor:[15,15]
                     }) 
                 }).addTo(mapa);
-                mapa.setView([latA, lonA], 17);
             } else { 
                 barco.setLatLng([latA, lonA]);
                 let el = document.getElementById('seta-barco');
                 if(el) el.style.transform = `rotate(${rumo}deg)`;
             }
-        }, null, { enableHighAccuracy: true });
+
+            // ACOMPANHA O BARCO: Mantém o barco no centro do ecrã
+            mapa.setView([latA, lonA], mapa.getZoom());
+
+        }, null, { enableHighAccuracy: true, maximumAge: 0 });
         desenhar();
     }
+
+    // Re-ativa o bloqueio do ecrã se o telemóvel for desbloqueado
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') manterEcraLigado();
+    });
 </script>
+
 </body>
 </html>
