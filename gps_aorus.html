@@ -17,7 +17,9 @@
         #map { width: 165%; height: 175%; left: -32.5%; top: -40%; position: absolute; transition: transform 0.6s ease-out; }
         .vista-3d { transform: rotateX(52deg) translateY(18%) scale(1.15); }
 
+        /* BOTÕES DE CONTROLO */
         #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(0,20,0,0.9); color: #00FF00; border: 2px solid #00FF00; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
+        #btnSeguir { position: absolute; top: 70px; right: 15px; z-index: 2000; background: #004400; color: #00FF00; border: 2px solid #00FF00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
 
         #painel-fixo { position: absolute; bottom: 15px; left: 10px; z-index: 1000; background: rgba(0,18,0,0.93); border: 2px solid #00FF00; border-radius: 10px; padding: 10px 12px 8px; width: 270px; color: #00FF00; }
         #btnLigar { background: #004400; color: #00FF00; width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
@@ -57,6 +59,8 @@
 <body>
 
 <button id="btnVista" onclick="alternarVista()">▲ VISTA 3D</button>
+<button id="btnSeguir" onclick="toggleSeguir()">⚓ SEGUIR: ON</button>
+
 <input type="file" id="f_gpx" style="display:none" accept=".gpx" onchange="lerGPX(this)">
 
 <div id="map-container"><div id="map"></div></div>
@@ -108,6 +112,7 @@
 <script>
     let mapa, barco, camada, rastoLinha, wakeLock = null;
     let latA = null, lonA = null, modo3D = false, gavaetaAberta = false, gravarRasto = false;
+    let seguirBarco = true; 
     let pontos = {}, rastoCoords = [];
 
     try { pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {}; } catch(e) { pontos = {}; }
@@ -119,6 +124,22 @@
 
     async function manterEcraLigado() {
         try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+    }
+
+    // BOTÃO SEGUIR / LIVRE
+    function toggleSeguir() {
+        seguirBarco = !seguirBarco;
+        const btn = document.getElementById('btnSeguir');
+        btn.textContent = seguirBarco ? '⚓ SEGUIR: ON' : '🖐️ LIVRE';
+        btn.style.background = seguirBarco ? '#004400' : '#440000';
+        if (seguirBarco && latA) mapa.setView([latA, lonA], mapa.getZoom());
+    }
+
+    // VISTA 3D / 2D
+    function alternarVista() {
+        modo3D = !modo3D;
+        document.getElementById('map').classList.toggle('vista-3d', modo3D);
+        document.getElementById('btnVista').textContent = modo3D ? '▼ CARTA 2D' : '▲ VISTA 3D';
     }
 
     function toggleGaveta() {
@@ -133,7 +154,7 @@
         document.getElementById('btnRasto').style.background = gravarRasto ? '#004400' : '#1a1a00';
     }
 
-    function apagarRasto() { rastoCoords = []; rastoLinha.setLatLngs([]); }
+    function apagarRasto() { rastoCoords = []; rastoLinha.setLatLngs([]); alert("Rasto apagado."); }
     function atualizarContador() { document.getElementById('contadorMarcas').textContent = Object.keys(pontos).length; }
 
     function desenhar() {
@@ -164,9 +185,7 @@
         document.getElementById('btnLigar').style.display = 'none';
         manterEcraLigado();
         navigator.geolocation.watchPosition(pos => {
-            // Filtro rigoroso: ignora saltos maiores que 30 metros
             if (pos.coords.accuracy > 30) return;
-
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             let rumo = pos.coords.heading || 0;
             
@@ -181,18 +200,20 @@
                 barco = L.marker([latA, lonA], { 
                     icon: L.divIcon({ html:`<div class="barco-container" id="seta-barco" style="transform: rotate(${rumo}deg)"><div class="barco-seta"></div></div>`, className:'', iconSize:[30,30], iconAnchor:[15,15] }) 
                 }).addTo(mapa);
+                mapa.setView([latA, lonA], 17);
             } else { 
                 barco.setLatLng([latA, lonA]);
                 let el = document.getElementById('seta-barco');
                 if(el) el.style.transform = `rotate(${rumo}deg)`;
             }
 
-            // A carta acompanha o barco automaticamente
-            mapa.setView([latA, lonA], mapa.getZoom());
+            if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
 
         }, null, { enableHighAccuracy: true, maximumAge: 0 });
         desenhar();
     }
+
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') manterEcraLigado(); });
 </script>
 </body>
 </html>
