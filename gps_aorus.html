@@ -18,7 +18,6 @@
         .vista-3d { transform: rotateX(52deg) translateY(18%) scale(1.15); }
 
         #btnVista { position: absolute; top: 15px; right: 15px; z-index: 2000; background: rgba(0,20,0,0.9); color: #00FF00; border: 2px solid #00FF00; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
-        #btnSeguir { position: absolute; top: 70px; right: 15px; z-index: 2000; background: #004400; color: #00FF00; border: 2px solid #00FF00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; }
 
         #painel-fixo { position: absolute; bottom: 15px; left: 10px; z-index: 1000; background: rgba(0,18,0,0.93); border: 2px solid #00FF00; border-radius: 10px; padding: 10px 12px 8px; width: 270px; color: #00FF00; }
         #btnLigar { background: #004400; color: #00FF00; width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #00FF00; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
@@ -58,8 +57,6 @@
 <body>
 
 <button id="btnVista" onclick="alternarVista()">▲ VISTA 3D</button>
-<button id="btnSeguir" onclick="toggleSeguir()">⚓ SEGUIR: ON</button>
-
 <input type="file" id="f_gpx" style="display:none" accept=".gpx" onchange="lerGPX(this)">
 
 <div id="map-container"><div id="map"></div></div>
@@ -111,22 +108,7 @@
 <script>
     let mapa, barco, camada, rastoLinha, wakeLock = null;
     let latA = null, lonA = null, modo3D = false, gavaetaAberta = false, gravarRasto = false;
-    let seguirBarco = true; 
     let pontos = {}, rastoCoords = [];
-
-    // --- NOVA FUNÇÃO INDEPENDENTE DE DIRECÇÃO ---
-    let linhaDirecao = null;
-    function traçarDireção(destinoLat, destinoLon) {
-        if (linhaDirecao) mapa.removeLayer(linhaDirecao);
-        linhaDirecao = L.polyline([[latA, lonA], [destinoLat, destinoLon]], {
-            color: 'cyan', 
-            weight: 2, 
-            dashArray: '10, 10', 
-            opacity: 0.7,
-            interactive: false
-        }).addTo(mapa);
-    }
-    // --------------------------------------------
 
     try { pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {}; } catch(e) { pontos = {}; }
 
@@ -137,13 +119,6 @@
 
     async function manterEcraLigado() {
         try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
-    }
-
-    function toggleSeguir() {
-        seguirBarco = !seguirBarco;
-        document.getElementById('btnSeguir').textContent = seguirBarco ? '⚓ SEGUIR: ON' : '🖐️ LIVRE';
-        document.getElementById('btnSeguir').style.background = seguirBarco ? '#004400' : '#440000';
-        if (seguirBarco && latA) mapa.setView([latA, lonA], mapa.getZoom());
     }
 
     function toggleGaveta() {
@@ -167,15 +142,7 @@
             let p = pontos[id];
             let iconAorus = L.divIcon({ html: `<div class="icon-aorus" style="color:${p.cor}">${p.simbolo}</div>`, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
             let m = L.marker([p.lat, p.lon], { icon: iconAorus }).addTo(camada);
-            
-            // INDEPENDENTE: Ao clicar na marca, desenha a linha de direção sem apagar nada
-            m.on('click', () => {
-                traçarDireção(p.lat, p.lon);
-            });
-
-            m.on('contextmenu', () => {
-                if(confirm("Apagar esta marca?")) { delete pontos[id]; localStorage.setItem('ptsAorus', JSON.stringify(pontos)); desenhar(); }
-            });
+            m.on('click', () => { if(confirm("Apagar esta marca?")) { delete pontos[id]; localStorage.setItem('ptsAorus', JSON.stringify(pontos)); desenhar(); } });
         });
         atualizarContador();
     }
@@ -197,7 +164,9 @@
         document.getElementById('btnLigar').style.display = 'none';
         manterEcraLigado();
         navigator.geolocation.watchPosition(pos => {
+            // Filtro rigoroso: ignora saltos maiores que 30 metros
             if (pos.coords.accuracy > 30) return;
+
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             let rumo = pos.coords.heading || 0;
             
@@ -212,20 +181,14 @@
                 barco = L.marker([latA, lonA], { 
                     icon: L.divIcon({ html:`<div class="barco-container" id="seta-barco" style="transform: rotate(${rumo}deg)"><div class="barco-seta"></div></div>`, className:'', iconSize:[30,30], iconAnchor:[15,15] }) 
                 }).addTo(mapa);
-                mapa.setView([latA, lonA], 17);
             } else { 
                 barco.setLatLng([latA, lonA]);
                 let el = document.getElementById('seta-barco');
                 if(el) el.style.transform = `rotate(${rumo}deg)`;
             }
 
-            if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
-            
-            // Atualiza a linha de direção se ela existir
-            if (linhaDirecao) {
-                let coords = linhaDirecao.getLatLngs();
-                linhaDirecao.setLatLngs([[latA, lonA], coords[1]]);
-            }
+            // A carta acompanha o barco automaticamente
+            mapa.setView([latA, lonA], mapa.getZoom());
 
         }, null, { enableHighAccuracy: true, maximumAge: 0 });
         desenhar();
