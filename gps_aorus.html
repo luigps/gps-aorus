@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,7 +6,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -181,24 +179,17 @@
         return `${!isLat && g < 100 ? (g < 10 ? '00' : '0') : ''}${g}°${m}`;
     }
 
-   function iniciarGPS() {
-        // 1. VERIFICA SE O TELEMÓVEL DEIXA USAR O GPS (A AUTORIZAÇÃO)
+    // A MUDANÇA ESTÁ APENAS AQUI (GPS)
+    function iniciarGPS() {
         if (navigator.geolocation) {
             document.getElementById('btnLigar').style.display = 'none';
             manterEcraLigado();
             
-            // Avisa que o código está vivo e a tentar ligar!
-            alert("A pedir autorização aos satélites em Lagos...");
-
-            var opcoesGpsRigor = {
-                enableHighAccuracy: true, 
-                maximumAge: 0,            
-                timeout: 20000            
-            };
+            alert("Radar a ligar. Confirma se o Chrome tem permissão e tens Internet para a imagem!");
 
             navigator.geolocation.watchPosition(pos => {
                 
-                if (pos.coords.accuracy > 100) return; 
+                if (pos.coords.accuracy > 100) return; // Agora tolera 100 metros para ligar mais rápido
                 
                 latA = pos.coords.latitude; lonA = pos.coords.longitude;
                 let rumo = pos.coords.heading || 0;
@@ -224,57 +215,22 @@
                 if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
 
             }, function(erro) {
-                // 2. SE A AUTORIZAÇÃO FALHAR, ELE AVISA-TE!
-                if(erro.code == 1) {
-                    alert("⚠️ ERRO: O Chrome recusou a autorização do GPS! Vai às permissões do telemóvel.");
+                if (erro.code == 1) {
+                    alert("⚠️ O teu Chrome recusou ligar o GPS. Tens de ir às definições do telemóvel autorizar.");
                 } else {
-                    console.warn("Aviso do GPS: " + erro.message);
+                    console.warn("Sinal fraco: " + erro.message);
                 }
-            }, opcoesGpsRigor);
-
+            }, { 
+                enableHighAccuracy: true, 
+                maximumAge: 0,
+                timeout: 20000 // Aguarda 20 segundos
+            });
             desenhar();
         } else {
-            alert("❌ O teu navegador não suporta GPS.");
+            alert("❌ O teu telemóvel não suporta GPS neste navegador.");
         }
     }
 
-        navigator.geolocation.watchPosition(pos => {
-            
-            // AFINAÇÃO DOS 100 METROS: O radar já arranca mesmo que o sinal seja um pouco mais fraco!
-            if (pos.coords.accuracy > 100) return; 
-            
-            latA = pos.coords.latitude; lonA = pos.coords.longitude;
-            let rumo = pos.coords.heading || 0;
-            
-            document.getElementById('txtLat').textContent = formatar(latA, true);
-            document.getElementById('txtLon').textContent = formatar(lonA, false);
-            document.getElementById('vel').textContent = (pos.coords.speed * 1.943 || 0).toFixed(1);
-            document.getElementById('hdg').textContent = pos.coords.heading ? Math.round(pos.coords.heading) : '---';
-            
-            if (gravarRasto) { rastoCoords.push([latA, lonA]); rastoLinha.setLatLngs(rastoCoords); }
-            
-            if (!barco) {
-                barco = L.marker([latA, lonA], { 
-                    icon: L.divIcon({ html:`<div class="barco-container" id="seta-barco" style="transform: rotate(${rumo}deg)"><div class="barco-seta"></div></div>`, className:'', iconSize:[30,30], iconAnchor:[15,15] }) 
-                }).addTo(mapa);
-                mapa.setView([latA, lonA], 17);
-            } else { 
-                barco.setLatLng([latA, lonA]);
-                let el = document.getElementById('seta-barco');
-                if(el) el.style.transform = `rotate(${rumo}deg)`;
-            }
-
-            if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
-
-        }, function(erro) {
-            console.warn("Aviso do GPS: " + erro.message);
-        }, opcoesGpsRigor); // O COMPLEMENTO É APLICADO AQUI
-        // --- FIM DO COMPLEMENTO ---
-
-        desenhar();
-    }
-
-    // Exportar e Limpar GPX
     function exportarELimpar() {
         let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS AORUS">';
         
@@ -307,7 +263,6 @@
         }
     }
 
-    // Ler ficheiro GPX (Importar)
     function lerGPX(input) {
         let file = input.files[0];
         if (!file) return;
@@ -340,4 +295,3 @@
 </script>
 </body>
 </html>
-
