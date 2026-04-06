@@ -189,7 +189,7 @@
 
             navigator.geolocation.watchPosition(pos => {
                 
-               if (pos.coords.accuracy > 5000) return;
+               if (pos.coords.accuracy > 1000) return;
                 
                 latA = pos.coords.latitude; lonA = pos.coords.longitude;
                 let rumo = pos.coords.heading || 0;
