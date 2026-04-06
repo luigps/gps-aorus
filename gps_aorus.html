@@ -3,107 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPS AORUS - RADAR LAGOS</title>
+    <title>GPS AORUS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { margin: 0; padding: 0; }
         #map { height: 100vh; width: 100vw; }
-        .controles {
+        .painel {
             position: absolute; top: 10px; left: 10px; z-index: 1000;
-            background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            background: white; padding: 10px; border-radius: 5px;
         }
-        button { 
-            padding: 10px; margin: 5px; cursor: pointer; font-weight: bold;
-            border-radius: 5px; border: 1px solid #ccc;
-        }
-        .btn-gps { background-color: #ffcc00; }
-        .coordenadas { font-size: 12px; margin-top: 5px; color: #333; }
     </style>
 </head>
 <body>
 
-    <div class="controles">
-        <button class="btn-gps" onclick="ligarGpsAorus()">⚡ LIGAR GPS AORUS</button>
-        <br>
-        <button onclick="setModo('seguimento')">📍 SEGUIMENTO</button>
-        <button onclick="setModo('livre')">✋ LIVRE</button>
-        <br>
-        <div class="coordenadas">
-            LAT: <span id="lat">0.000000</span> | LON: <span id="lon">0.000000</span>
-        </div>
+    <div class="painel">
+        <button onclick="ligarGps()">⚡ LIGAR GPS AORUS</button>
+        <div id="coords" style="font-size: 10px;">LAT: 0 | LON: 0</div>
     </div>
 
     <div id="map"></div>
 
     <script>
-        // --- CONFIGURAÇÃO DO MAPA (O QUE ESTÁ BEM) ---
-        var map = L.map('map').setView([37.1028, -8.6730], 15); // Lagos
+        // CONFIGURAÇÕES ORIGINAIS DE x64 E BIBLIOTECAS (MANTIDAS)
+        var map = L.map('map').setView([37.102, -8.673], 14);
         
-        // Mapa de Satélite (Rigor de Imagem)
-        var satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Aorus Radar - Satélite'
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Satélite Aorus'
         }).addTo(map);
 
-        var marcador = L.circleMarker([0, 0], {
-            radius: 10, color: 'white', fillColor: '#007bff', fillOpacity: 1, weight: 2
-        }).addTo(map);
+        var marker = L.circleMarker([0, 0], {radius: 8, color: 'blue'}).addTo(map);
 
-        var modoSeguimento = true;
-
-        // --- CÓDIGO NOVO (FORÇAR GPS COM RIGOR) ---
-
-        function setModo(modo) {
-            if (modo === 'seguimento') {
-                modoSeguimento = true;
-                alert("Modo Seguimento: O mapa segue o teu rasto.");
-            } else {
-                modoSeguimento = false;
-                alert("Modo Livre: Podes arrastar o mapa à vontade.");
-            }
-        }
-
-        var opcoesGps = {
-            enableHighAccuracy: true, // FORÇA OS SATÉLITES (IMPORTANTE!)
-            timeout: 15000,           // Espera 15 segundos pelo sinal
-            maximumAge: 0             // Posição sempre real, nada de memória antiga
-        };
-
-        function ligarGpsAorus() {
+        // --- A ALTERAÇÃO DE RIGOR PARA O GPS ---
+        function ligarGps() {
             if (navigator.geolocation) {
-                // watchPosition: Mantém o GPS "agarrado" e não desliga sozinho
-                navigator.geolocation.watchPosition(sucessoGps, erroGps, opcoesGps);
-                alert("A procurar satélites... Vai para a rua em Lagos!");
-            } else {
-                alert("O teu Nokia não suporta este GPS.");
-            }
-        }
+                // watchPosition força o GPS a ficar ligado mesmo que arrastes o mapa
+                navigator.geolocation.watchPosition(function(pos) {
+                    var lat = pos.coords.latitude;
+                    var lon = pos.coords.longitude;
 
-        function sucessoGps(posicao) {
-            var lat = posicao.coords.latitude;
-            var lon = posicao.coords.longitude;
-
-            // Escreve as coordenadas no ecrã (Rigor de Dados)
-            document.getElementById('lat').innerText = lat.toFixed(6);
-            document.getElementById('lon').innerText = lon.toFixed(6);
-
-            // Atualiza o ponto azul no mapa
-            marcador.setLatLng([lat, lon]);
-
-            // Só move o mapa se estiver em modo SEGUIMENTO
-            if (modoSeguimento) {
-                map.setView([lat, lon], 17);
-            }
-        }
-
-        function erroGps(err) {
-            // Se o GPS falhar, avisa no ecrã sem travar a App
-            console.warn('Erro (' + err.code + '): ' + err.message);
-            if(err.code == 1) {
-                alert("ERRO: Precisas de dar PERMISSÃO ao Chrome no Nokia!");
+                    document.getElementById('coords').innerHTML = "LAT: " + lat.toFixed(6) + " | LON: " + lon.toFixed(6);
+                    marker.setLatLng([lat, lon]);
+                    
+                    // Só centraliza se tu não estiveres a arrastar
+                    // map.setView([lat, lon]); 
+                }, 
+                function(erro) { console.log(erro); }, 
+                { 
+                    enableHighAccuracy: true, // ALTA PRECISÃO (SINAL DE SATÉLITE)
+                    maximumAge: 0, 
+                    timeout: 10000 
+                });
             }
         }
     </script>
