@@ -213,6 +213,68 @@
         desenhar();
     }
 
+    // NOVA FUNÇÃO: Exportar e Limpar GPX
+    function exportarELimpar() {
+        let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GPS AORUS">';
+        
+        Object.keys(pontos).forEach(id => {
+            let p = pontos[id];
+            gpx += `<wpt lat="${p.lat}" lon="${p.lon}"><name>${p.simbolo}</name></wpt>`;
+        });
+        
+        if (rastoCoords.length > 0) {
+            gpx += '<trk><name>Rasto Aorus</name><trkseg>';
+            rastoCoords.forEach(c => {
+                gpx += `<trkpt lat="${c[0]}" lon="${c[1]}"></trkpt>`;
+            });
+            gpx += '</trkseg></trk>';
+        }
+        
+        gpx += '</gpx>';
+
+        let blob = new Blob([gpx], {type: "application/gpx+xml"});
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "Radar_Lagos_Aorus_" + Date.now() + ".gpx";
+        link.click();
+
+        if (confirm("Ficheiro GPX guardado! Queres limpar as marcas e o rasto do ecrã para começar de novo?")) {
+            pontos = {};
+            localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+            apagarRasto();
+            desenhar();
+        }
+    }
+
+    // NOVA FUNÇÃO: Ler ficheiro GPX (Importar)
+    function lerGPX(input) {
+        let file = input.files[0];
+        if (!file) return;
+        
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let text = e.target.result;
+            let parser = new DOMParser();
+            let xml = parser.parseFromString(text, "text/xml");
+            
+            let wpts = xml.getElementsByTagName('wpt');
+            for (let i = 0; i < wpts.length; i++) {
+                let lat = parseFloat(wpts[i].getAttribute('lat'));
+                let lon = parseFloat(wpts[i].getAttribute('lon'));
+                let nomeTag = wpts[i].getElementsByTagName('name')[0];
+                let simbolo = nomeTag ? nomeTag.textContent : '📍';
+                
+                pontos['PT_IMPORT_'+Date.now()+'_'+i] = { lat: lat, lon: lon, simbolo: simbolo, cor: '#00CCFF' };
+            }
+            
+            localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+            desenhar();
+            alert("Marcas importadas com sucesso para o teu Radar!");
+            if(gavaetaAberta) toggleGaveta();
+        };
+        reader.readAsText(file);
+    }
+
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') manterEcraLigado(); });
 </script>
 </body>
