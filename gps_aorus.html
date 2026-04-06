@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -126,7 +128,6 @@
         try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
     }
 
-    // BOTÃO SEGUIR / LIVRE
     function toggleSeguir() {
         seguirBarco = !seguirBarco;
         const btn = document.getElementById('btnSeguir');
@@ -135,7 +136,6 @@
         if (seguirBarco && latA) mapa.setView([latA, lonA], mapa.getZoom());
     }
 
-    // VISTA 3D / 2D
     function alternarVista() {
         modo3D = !modo3D;
         document.getElementById('map').classList.toggle('vista-3d', modo3D);
@@ -185,9 +185,17 @@
         document.getElementById('btnLigar').style.display = 'none';
         manterEcraLigado();
         
-        // --- AQUI ESTÁ A AFINAÇÃO DO GPS (COM TIMEOUT E MENSAGEM DE ERRO) ---
+        // --- O COMPLEMENTO DE RIGOR AQUI ENCAIXADO ---
+        var opcoesGpsRigor = {
+            enableHighAccuracy: true, // Força os satélites reais
+            maximumAge: 0,            // Posição fresca, sem atrasos
+            timeout: 20000            // O telemóvel tem 20 segundos para apanhar o sinal
+        };
+
         navigator.geolocation.watchPosition(pos => {
-            if (pos.coords.accuracy > 30) return; // Rigor Manteve-se!
+            
+            // AFINAÇÃO DOS 100 METROS: O radar já arranca mesmo que o sinal seja um pouco mais fraco!
+            if (pos.coords.accuracy > 100) return; 
             
             latA = pos.coords.latitude; lonA = pos.coords.longitude;
             let rumo = pos.coords.heading || 0;
@@ -213,9 +221,9 @@
             if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
 
         }, function(erro) {
-            console.warn("Aviso do GPS: " + erro.message); // Não crasha, apenas avisa!
-        }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }); // O TIMEOUT MÁGICO AQUI
-        // --- FIM DA AFINAÇÃO ---
+            console.warn("Aviso do GPS: " + erro.message);
+        }, opcoesGpsRigor); // O COMPLEMENTO É APLICADO AQUI
+        // --- FIM DO COMPLEMENTO ---
 
         desenhar();
     }
@@ -286,5 +294,4 @@
 </script>
 </body>
 </html>
-
 
