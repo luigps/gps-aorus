@@ -1,109 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR TOTAL</title>
-    <meta charset="UTF-8">
+    <title>GPS AORUS RIGOR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        * { touch-action: pan-y; -webkit-user-select: none; box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; width: 100%; height: 100%; font-family: monospace; }
+        body, html { margin: 0; background: #000; color: #0f0; font-family: monospace; height: 100%; overflow: hidden; }
         #map { width: 100%; height: 100%; position: absolute; }
-        #painel { position: absolute; bottom: 10px; left: 10px; z-index: 1000; background: rgba(0,20,0,0.95); border: 2px solid #0f0; border-radius: 10px; padding: 12px; width: 280px; color: #0f0; }
-        #btnLigar { background: #004400; color: #0f0; width: 100%; padding: 12px; border: 1px solid #0f0; border-radius: 6px; font-weight: bold; margin-bottom: 8px; cursor: pointer; }
-        .info-alerta { background: #001a00; color: #0f0; text-align: center; border: 1px dashed #0f0; padding: 5px; font-size: 11px; margin: 8px 0; }
-        #gaveta { position: absolute; bottom: 0; left: 0; z-index: 2000; width: 100%; background: #000; border-top: 2px solid #0f0; padding: 20px; transform: translateY(100%); transition: 0.3s; border-radius: 15px 15px 0 0; }
+        #painel { position: absolute; bottom: 10px; left: 10px; z-index: 1000; background: rgba(0,20,0,0.9); border: 2px solid #0f0; padding: 10px; width: 260px; }
+        #gaveta { position: absolute; bottom: 0; width: 100%; background: #000; border-top: 2px solid #0f0; padding: 15px; transform: translateY(100%); transition: 0.3s; z-index: 2000; }
         #gaveta.aberta { transform: translateY(0); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
-        #alerta-visual { display:none; position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #f00; color: #fff; padding: 25px; border-radius: 20px; font-weight: bold; font-size: 26px; z-index: 9999; border: 5px solid #fff; text-align: center; width: 85%; }
+        .btn { background: #111; color: #0f0; border: 1px solid #0f0; padding: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 5px; }
+        #aviso { display:none; position: fixed; top: 20%; left: 50%; transform: translate(-50%, -50%); background: red; color: white; padding: 20px; z-index: 9999; border: 4px solid white; font-size: 24px; text-align: center; }
     </style>
 </head>
 <body>
-    <div id="alerta-visual">🚨 ALVO A <span id="d-txt">---</span>m 🚨</div>
+    <div id="aviso">🚨 ALVO A <span id="dt"></span>m 🚨</div>
     <div id="map"></div>
     <div id="painel">
-        <button id="btnLigar" onclick="iniciar()">⚡ LIGAR GPS AORUS</button>
-        <div style="font-size: 15px;">
-            LAT: <span id="la">---</span><br>LON: <span id="lo">---</span><br>
-            VEL: <span id="ve">0.0</span> kn | HDG: <span id="hd">---</span>°
-        </div>
-        <div class="info-alerta">ALERTA FIXO: 100 METROS</div>
-        <button class="btn" style="width:100%; margin-top:5px;" onclick="document.getElementById('gaveta').classList.add('aberta')">▲ MENU / MARCAS</button>
+        <button class="btn" id="btnLigar" onclick="iniciar()">⚡ LIGAR GPS</button>
+        <div id="coords">LAT: ---<br>LON: ---</div>
+        <div style="border: 1px dashed #0f0; font-size: 10px; padding: 3px; margin: 5px 0;">100 METROS FIXO</div>
+        <button class="btn" onclick="document.getElementById('gaveta').classList.add('aberta')">▲ MENU / MARCAS</button>
     </div>
     <div id="gaveta">
-        <button class="btn" style="width:100%; background:#600; color:#fff; margin-bottom:15px; font-size: 16px;" onclick="marcar()">🔴 MARCAR AGORA</button>
-        <div class="grid">
-            <button class="btn" onclick="document.getElementById('gpx').click()">📥 IMPORTAR</button>
-            <button class="btn" style="background: #002244; color: #8af;" onclick="exportarGPX()">📤 EXPORTAR</button>
-            <button class="btn" onclick="apagarTudo()" style="color:#f66; border-color:#f66;">🗑️ APAGAR TUDO</button>
-            <button class="btn" onclick="document.getElementById('gaveta').classList.remove('aberta')">✖ FECHAR</button>
-        </div>
-        <input type="file" id="gpx" style="display:none" onchange="lerGPX(this)">
+        <button class="btn" style="background:#400;" onclick="marcar()">🔴 MARCAR</button>
+        <button class="btn" onclick="document.getElementById('gpx').click()">📥 IMPORTAR</button>
+        <button class="btn" style="color: #8af;" onclick="exportar()">📤 EXPORTAR</button>
+        <button class="btn" onclick="apagar()" style="color:red;">🗑️ APAGAR TUDO</button>
+        <button class="btn" onclick="document.getElementById('gaveta').classList.remove('aberta')">✖ FECHAR</button>
+        <input type="file" id="gpx" style="display:none" onchange="ler(this)">
     </div>
     <script>
-        let mapa, barco, camada, latA, lonA, pontos = {};
-        try { pontos = JSON.parse(localStorage.getItem('pts_aorus')) || {}; } catch(e) { pontos = {}; }
-        mapa = L.map('map', { center: [37.1, -8.67], zoom: 15, zoomControl: false, attributionControl: false });
+        let mapa, barco, camada, la, lo, pts = {};
+        try { pts = JSON.parse(localStorage.getItem('pts_aorus')) || {}; } catch(e) {}
+        mapa = L.map('map', { center: [37.1, -8.6], zoom: 15, zoomControl: false, attributionControl: false });
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(mapa);
         camada = L.layerGroup().addTo(mapa);
         function desenhar() {
             camada.clearLayers();
-            Object.keys(pontos).forEach(id => {
-                let p = pontos[id];
-                L.marker([p.lat, p.lon], { icon: L.divIcon({ html: `<div style="font-size:24px;">${p.s}</div>`, className: '' }) }).addTo(camada);
-            });
+            Object.values(pts).forEach(p => L.marker([p.lat, p.lon], { icon: L.divIcon({ html: `<div style="font-size:20px;">${p.s}</div>`, className: '' }) }).addTo(camada));
         }
-        function marcar() {
-            if(!latA) return;
-            pontos['P'+Date.now()] = { lat: latA, lon: lonA, s: '🔴' };
-            localStorage.setItem('pts_aorus', JSON.stringify(pontos));
-            desenhar(); document.getElementById('gaveta').classList.remove('aberta');
-        }
+        function marcar() { if(!la) return; pts['P'+Date.now()] = { lat: la, lon: lo, s: '🔴' }; localStorage.setItem('pts_aorus', JSON.stringify(pts)); desenhar(); }
         function iniciar() {
             document.getElementById('btnLigar').style.display = 'none';
             navigator.geolocation.watchPosition(pos => {
-                latA = pos.coords.latitude; lonA = pos.coords.longitude;
-                document.getElementById('la').textContent = latA.toFixed(5);
-                document.getElementById('lo').textContent = lonA.toFixed(5);
-                document.getElementById('ve').textContent = (pos.coords.speed * 1.94 || 0).toFixed(1);
-                document.getElementById('hd').textContent = Math.round(pos.coords.heading || 0);
+                la = pos.coords.latitude; lo = pos.coords.longitude;
+                document.getElementById('coords').innerHTML = `LAT: ${la.toFixed(5)}<br>LON: ${lo.toFixed(5)}`;
                 let menor = Infinity;
-                Object.values(pontos).forEach(p => { let d = mapa.distance([latA, lonA], [p.lat, p.lon]); if(d < menor) menor = d; });
-                document.getElementById('alerta-visual').style.display = menor <= 100 ? 'block' : 'none';
-                document.getElementById('d-txt').textContent = Math.round(menor);
-                if(!barco) { barco = L.marker([latA, lonA]).addTo(mapa); mapa.setView([latA, lonA], 17); }
-                else { barco.setLatLng([latA, lonA]); }
-                mapa.panTo([latA, lonA]);
-            }, null, { enableHighAccuracy: true, maximumAge: 0 });
+                Object.values(pts).forEach(p => { let d = mapa.distance([la, lo], [p.lat, p.lon]); if(d < menor) menor = d; });
+                document.getElementById('aviso').style.display = menor <= 100 ? 'block' : 'none';
+                document.getElementById('dt').textContent = Math.round(menor);
+                if(!barco) { barco = L.marker([la, lo]).addTo(mapa); mapa.setView([la, lo], 17); } else { barco.setLatLng([la, lo]); }
+                mapa.panTo([la, lo]);
+            }, null, { enableHighAccuracy: true });
             desenhar();
         }
-
-        // --- FUNÇÃO DE EXPORTAR QUE FALTAVA ---
-        function exportarGPX() {
-            if(Object.keys(pontos).length === 0) { alert("Não tens marcas para exportar!"); return; }
-            let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Aorus">';
-            Object.values(pontos).forEach(p => {
-                gpx += `<wpt lat="${p.lat}" lon="${p.lon}"><name>MARCA</name></wpt>`;
-            });
-            gpx += '</gpx>';
-            let blob = new Blob([gpx], {type: 'text/xml'});
-            let link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'marcas_aorus.gpx';
-            link.click();
+        function exportar() {
+            let g = '<?xml version="1.0"?><gpx version="1.1">';
+            Object.values(pts).forEach(p => g += `<wpt lat="${p.lat}" lon="${p.lon}"></wpt>`);
+            g += '</gpx>';
+            let l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([g])); l.download = 'marcas.gpx'; l.click();
         }
-
-        function lerGPX(i) {
+        function ler(i) {
             let r = new FileReader(); r.onload = (e) => {
                 let x = new DOMParser().parseFromString(e.target.result, "text/xml");
                 let w = x.getElementsByTagName('wpt');
-                for(let j=0; j<w.length; j++) pontos['I'+Date.now()+j] = { lat: parseFloat(w[j].getAttribute('lat')), lon: parseFloat(w[j].getAttribute('lon')), s: '📍' };
-                localStorage.setItem('pts_aorus', JSON.stringify(pontos)); desenhar(); alert("Importado!");
+                for(let j=0; j<w.length; j++) pts['I'+Date.now()+j] = { lat: parseFloat(w[j].getAttribute('lat')), lon: parseFloat(w[j].getAttribute('lon')), s: '📍' };
+                localStorage.setItem('pts_aorus', JSON.stringify(pts)); desenhar(); alert("OK");
             }; r.readAsText(i.files[0]);
         }
-        function apagarTudo() { if(confirm("Apagar tudo?")) { pontos = {}; localStorage.setItem('pts_aorus', "{}"); desenhar(); } }
+        function apagar() { if(confirm("Apagar?")) { pts = {}; localStorage.setItem('pts_aorus', "{}"); desenhar(); } }
     </script>
 </body>
 </html>
