@@ -39,42 +39,65 @@
     </div>
     <script>
         let mapa, barco, camada, la, lo, pts = {};
+        // RIGOR: LER AS MARCAS DO PORÃO DO TELEMÓVEL
         try { pts = JSON.parse(localStorage.getItem('pts_aorus')) || {}; } catch(e) {}
+
         mapa = L.map('map', { center: [37.1, -8.67], zoom: 15, zoomControl: false, attributionControl: false });
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(mapa);
         camada = L.layerGroup().addTo(mapa);
+
         function desenhar() {
             camada.clearLayers();
-            Object.values(pts).forEach(p => L.marker([p.lat, p.lon], { icon: L.divIcon({ html: `<div style="font-size:24px;">${p.s}</div>`, className: '' }) }).addTo(camada));
+            Object.values(pts).forEach(p => {
+                L.marker([p.lat, p.lon], { icon: L.divIcon({ html: `<div style="font-size:24px;">${p.s}</div>`, className: '' }) }).addTo(camada);
+            });
         }
-        function marcar() { if(!la) return; pts['P'+Date.now()] = { lat: la, lon: lo, s: '🔴' }; localStorage.setItem('pts_aorus', JSON.stringify(pts)); desenhar(); document.getElementById('gaveta').classList.remove('aberta'); }
+
+        function marcar() { 
+            if(!la) return; 
+            pts['P'+Date.now()] = { lat: la, lon: lo, s: '🔴' }; 
+            localStorage.setItem('pts_aorus', JSON.stringify(pts)); 
+            desenhar(); 
+            document.getElementById('gaveta').classList.remove('aberta'); 
+        }
+
         function iniciar() {
             document.getElementById('btnLigar').style.display = 'none';
             navigator.geolocation.watchPosition(pos => {
                 la = pos.coords.latitude; lo = pos.coords.longitude;
                 document.getElementById('coords').innerHTML = `LAT: ${la.toFixed(5)}<br>LON: ${lo.toFixed(5)}`;
-                let menor = Infinity; Object.values(pts).forEach(p => { let d = mapa.distance([la, lo], [p.lat, p.lon]); if(d < menor) menor = d; });
+                let menor = Infinity; 
+                Object.values(pts).forEach(p => { let d = mapa.distance([la, lo], [p.lat, p.lon]); if(d < menor) menor = d; });
                 document.getElementById('alerta-visual').style.display = menor <= 100 ? 'block' : 'none';
                 document.getElementById('d-txt').textContent = Math.round(menor);
-                if(!barco) { barco = L.marker([la, lo]).addTo(mapa); mapa.setView([la, lo], 17); } else { barco.setLatLng([la, lo]); }
+                if(!barco) { barco = L.marker([la, lo]).addTo(mapa); mapa.setView([la, lo], 17); } 
+                else { barco.setLatLng([la, lo]); }
                 mapa.panTo([la, lo]);
             }, null, { enableHighAccuracy: true });
             desenhar();
         }
+
         function exportarGPX() {
             let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1">';
             Object.values(pts).forEach(p => { gpx += `<wpt lat="${p.lat}" lon="${p.lon}"><name>Marca</name></wpt>`; });
             gpx += '</gpx>';
-            let link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([gpx], {type: 'text/xml'})); link.download = 'marcas_aorus.gpx'; link.click();
+            let link = document.createElement('a'); 
+            link.href = URL.createObjectURL(new Blob([gpx], {type: 'text/xml'})); 
+            link.download = 'marcas_aorus.gpx'; 
+            link.click();
         }
+
         function lerGPX(i) {
             let r = new FileReader(); r.onload = (e) => {
                 let x = new DOMParser().parseFromString(e.target.result, "text/xml");
                 let w = x.getElementsByTagName('wpt');
                 for(let j=0; j<w.length; j++) pts['I'+Date.now()+j] = { lat: parseFloat(w[j].getAttribute('lat')), lon: parseFloat(w[j].getAttribute('lon')), s: '📍' };
-                localStorage.setItem('pts_aorus', JSON.stringify(pts)); desenhar(); alert("GPX OK!");
+                localStorage.setItem('pts_aorus', JSON.stringify(pts)); 
+                desenhar(); 
+                alert("GPX OK!");
             }; r.readAsText(i.files[0]);
         }
+
         function apagarTudo() { if(confirm("Apagar tudo?")) { pts = {}; localStorage.setItem('pts_aorus', "{}"); desenhar(); } }
     </script>
 </body>
