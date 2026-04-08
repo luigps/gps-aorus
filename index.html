@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GPS AORUS - RIGOR 100M</title>
+    <title>GPS AORUS - RIGOR TOTAL</title>
     <meta charset="UTF-8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -49,6 +49,7 @@
         .btn-vermelho { background: #600 !important; color: white !important; grid-column: span 3; font-size: 13px; margin-bottom: 5px; }
         .btn-span2 { grid-column: span 2; }
         .btn-rasto { background: #1a1a00 !important; color: #FFFF00 !important; border-color: #FFFF00 !important; }
+        .btn-limpar { background: #300 !important; color: #f88 !important; border-color: #f88 !important; }
 
         .barco-container { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s linear; }
         .barco-seta { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 26px solid yellow; filter: drop-shadow(0 0 4px #FF0); }
@@ -105,17 +106,19 @@
         <button class="btn-m btn-rasto btn-span2" onclick="apagarRasto()">🗑️ LIMPAR RASTO</button>
     </div>
 
-    <div class="secao-label">◆ FICHEIROS E DADOS</div>
+    <div class="secao-label">◆ FERRAMENTAS E FICHEIROS</div>
     <div class="grid-marcas">
-        <button class="btn-m btn-importar" onclick="document.getElementById('f_gpx').click()">📥 GPX</button>
-        <button class="btn-m" style="grid-column: span 2; background: #200; border-color: red;" onclick="toggleGaveta()">✖ FECHAR MENU</button>
+        <button class="btn-m" onclick="document.getElementById('f_gpx').click()">📥 IMPORTAR GPX</button>
+        <button class="btn-m btn-limpar btn-span2" onclick="apagarTudo()">⚠️ APAGAR TUDO</button>
     </div>
+    
+    <button class="btn-m" style="width:100%; margin-top:10px; background: #200; border-color: red;" onclick="toggleGaveta()">✖ FECHAR MENU</button>
 </div>
 
 <script>
     let mapa, barco, camada, rastoLinha, wakeLock = null;
     let latA = null, lonA = null, modo3D = false, gavaetaAberta = false, gravarRasto = false;
-    let seguirBarco = true, distAlvo = 100; // FIXO EM 100 METROS
+    let seguirBarco = true, distAlvo = 100;
     let pontos = {}, rastoCoords = [];
 
     try { pontos = JSON.parse(localStorage.getItem('ptsAorus')) || {}; } catch(e) { pontos = {}; }
@@ -155,6 +158,16 @@
     }
 
     function apagarRasto() { rastoCoords = []; rastoLinha.setLatLngs([]); }
+    
+    function apagarTudo() {
+        if(confirm("ATENÇÃO: Queres apagar TODAS as marcas e o rasto?")) {
+            pontos = {};
+            localStorage.setItem('ptsAorus', JSON.stringify(pontos));
+            apagarRasto();
+            desenhar();
+        }
+    }
+
     function atualizarContador() { document.getElementById('contadorMarcas').textContent = Object.keys(pontos).length; }
 
     function desenhar() {
@@ -203,7 +216,7 @@
                 });
 
                 const alertBox = document.getElementById('alerta-chegada');
-                if (menorDist <= 100) { // RIGOR DE 100 METROS
+                if (menorDist <= 100) { 
                     alertBox.style.display = 'block';
                     document.getElementById('dist-txt').textContent = Math.round(menorDist);
                 } else {
@@ -242,6 +255,7 @@
             }
             localStorage.setItem('ptsAorus', JSON.stringify(pontos));
             desenhar();
+            alert("GPX importado com rigor!");
         };
         reader.readAsText(file);
     }
