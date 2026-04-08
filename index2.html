@@ -36,7 +36,7 @@
         <button class="btn" style="width:100%; background:#600; color:#fff; margin-bottom:15px; font-size: 16px;" onclick="marcar()">🔴 MARCAR AGORA</button>
         <div class="grid">
             <button class="btn" onclick="document.getElementById('gpx').click()">📥 IMPORTAR</button>
-            <button class="btn" onclick="exportar()">📤 EXPORTAR</button>
+            <button class="btn" style="background: #002244; color: #8af;" onclick="exportarGPX()">📤 EXPORTAR</button>
             <button class="btn" onclick="apagarTudo()" style="color:#f66; border-color:#f66;">🗑️ APAGAR TUDO</button>
             <button class="btn" onclick="document.getElementById('gaveta').classList.remove('aberta')">✖ FECHAR</button>
         </div>
@@ -79,12 +79,22 @@
             }, null, { enableHighAccuracy: true, maximumAge: 0 });
             desenhar();
         }
-        function exportar() {
+
+        // --- FUNÇÃO DE EXPORTAR QUE FALTAVA ---
+        function exportarGPX() {
+            if(Object.keys(pontos).length === 0) { alert("Não tens marcas para exportar!"); return; }
             let gpx = '<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Aorus">';
-            Object.values(pontos).forEach(p => { gpx += `<wpt lat="${p.lat}" lon="${p.lon}"><name>Marca</name></wpt>`; });
+            Object.values(pontos).forEach(p => {
+                gpx += `<wpt lat="${p.lat}" lon="${p.lon}"><name>MARCA</name></wpt>`;
+            });
             gpx += '</gpx>';
-            let link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([gpx], {type: 'text/xml'})); link.download = 'marcas_aorus.gpx'; link.click();
+            let blob = new Blob([gpx], {type: 'text/xml'});
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'marcas_aorus.gpx';
+            link.click();
         }
+
         function lerGPX(i) {
             let r = new FileReader(); r.onload = (e) => {
                 let x = new DOMParser().parseFromString(e.target.result, "text/xml");
