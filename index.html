@@ -184,13 +184,18 @@
             document.getElementById('btnLigar').style.display = 'none';
             manterEcraLigado();
             navigator.geolocation.watchPosition(pos => {
+                // FILTRO DE RIGOR: Ignora saltos enormes de mau sinal
+                if (pos.coords.accuracy > 100) return;
+                
                 latA = pos.coords.latitude; lonA = pos.coords.longitude;
                 let rumo = pos.coords.heading || 0;
                 document.getElementById('txtLat').textContent = formatar(latA, true);
                 document.getElementById('txtLon').textContent = formatar(lonA, false);
                 document.getElementById('vel').textContent = (pos.coords.speed * 1.943 || 0).toFixed(1);
                 document.getElementById('hdg').textContent = pos.coords.heading ? Math.round(pos.coords.heading) : '---';
+                
                 if (gravarRasto) { rastoCoords.push([latA, lonA]); rastoLinha.setLatLngs(rastoCoords); }
+                
                 if (!barco) {
                     barco = L.marker([latA, lonA], { 
                         icon: L.divIcon({ html:`<div class="barco-container" id="seta-barco" style="transform: rotate(${rumo}deg)"><div class="barco-seta"></div></div>`, className:'', iconSize:[30,30], iconAnchor:[15,15] }) 
@@ -201,8 +206,14 @@
                     let el = document.getElementById('seta-barco');
                     if(el) el.style.transform = `rotate(${rumo}deg)`;
                 }
+                
                 if (seguirBarco) mapa.setView([latA, lonA], mapa.getZoom());
-            }, e => {}, { enableHighAccuracy: true, maximumAge: 0 });
+                
+            }, e => {}, { 
+                enableHighAccuracy: true, 
+                maximumAge: 0, 
+                timeout: 5000 // Obriga a puxar o sinal fresco a cada momento
+            });
             desenhar();
         }
     }
